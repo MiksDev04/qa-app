@@ -1,0 +1,146 @@
+{
+    "lms": [
+        {
+            "year": "2023",
+            "term": "1st Semester",
+            "value": 87.5,
+            "unit": "Percentage (%)",
+            "description": "Student passing rate - all courses"
+        },
+        {
+            "year": "2023",
+            "term": "2nd Semester",
+            "value": 89.2,
+            "unit": "Percentage (%)",
+            "description": "Student passing rate - all courses"
+        },
+        {
+            "year": "2024",
+            "term": "1st Semester",
+            "value": 91.3,
+            "unit": "Percentage (%)",
+            "description": "Student passing rate - all courses"
+        },
+        {
+            "year": "2024",
+            "term": "2nd Semester",
+            "value": 88.7,
+            "unit": "Percentage (%)",
+            "description": "Student passing rate - all courses"
+        },
+        {
+            "year": "2023",
+            "term": "1st Semester",
+            "value": 3.8,
+            "unit": "Rate (1-5)",
+            "description": "Average student GPA"
+        },
+        {
+            "year": "2023",
+            "term": "2nd Semester",
+            "value": 3.9,
+            "unit": "Rate (1-5)",
+            "description": "Average student GPA"
+        },
+        {
+            "year": "2023",
+            "term": "Annual",
+            "value": 92,
+            "unit": "Percentage (%)",
+            "description": "Board exam passing rate"
+        },
+        {
+            "year": "2024",
+            "term": "Annual",
+            "value": 94,
+            "unit": "Percentage (%)",
+            "description": "Board exam passing rate"
+        },
+        {
+            "year": "2023",
+            "term": "1st Semester",
+            "value": 85,
+            "unit": "Percentage (%)",
+            "description": "Course completion rate"
+        },
+        {
+            "year": "2023",
+            "term": "2nd Semester",
+            "value": 88,
+            "unit": "Percentage (%)",
+            "description": "Course completion rate"
+        }
+    ],
+    "faculty_evaluation": [
+        {
+            "year": "2023",
+            "term": "1st Semester",
+            "value": 4.2,
+            "unit": "Rate (1-5)",
+            "description": "Average faculty teaching evaluation score"
+        },
+        {
+            "year": "2023",
+            "term": "2nd Semester",
+            "value": 4.3,
+            "unit": "Rate (1-5)",
+            "description": "Average faculty teaching evaluation score"
+        },
+        {
+            "year": "2024",
+            "term": "1st Semester",
+            "value": 4.4,
+            "unit": "Rate (1-5)",
+            "description": "Average faculty teaching evaluation score"
+        },
+        {
+            "year": "2023",
+            "term": "Annual",
+            "value": 85,
+            "unit": "Percentage (%)",
+            "description": "Faculty satisfaction rate"
+        },
+        {
+            "year": "2024",
+            "term": "Annual",
+            "value": 88,
+            "unit": "Percentage (%)",
+            "description": "Faculty satisfaction rate"
+        },
+        {
+            "year": "2023",
+            "term": "1st Semester",
+            "value": 92,
+            "unit": "Percentage (%)",
+            "description": "Peer review positive rating"
+        },
+        {
+            "year": "2023",
+            "term": "2nd Semester",
+            "value": 93,
+            "unit": "Percentage (%)",
+            "description": "Peer review positive rating"
+        },
+        {
+            "year": "2023",
+            "term": "1st Semester",
+            "value": 4.0,
+            "unit": "Rate (1-5)",
+            "description": "Course evaluation score - instructor effectiveness"
+        },
+        {
+            "year": "2023",
+            "term": "2nd Semester",
+            "value": 4.1,
+            "unit": "Rate (1-5)",
+            "description": "Course evaluation score - instructor effectiveness"
+        },
+        {
+            "year": "2024",
+            "term": "1st Semester",
+            "value": 4.2,
+            "unit": "Rate (1-5)",
+            "description": "Course evaluation score - instructor effectiveness"
+        }
+    ]
+}
