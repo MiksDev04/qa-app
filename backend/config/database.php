@@ -1,6 +1,6 @@
 <?php
 /**
- * Database Configuration — MySQLi (Railway Ready)
+ * Database Configuration — MySQLi (Railway Ready Fixed)
  * Quality Assurance Management System
  * backend/config/database.php
  */
@@ -14,9 +14,9 @@ function loadEnv(string $path): void {
     $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
     foreach ($lines as $line) {
-        $trimmed = trim($line);
-        if ($trimmed === '' || strpos($trimmed, '#') === 0) continue;
+        $line = trim($line);
 
+        if ($line === '' || $line[0] === '#') continue;
         if (strpos($line, '=') === false) continue;
 
         [$key, $value] = explode('=', $line, 2);
@@ -24,43 +24,50 @@ function loadEnv(string $path): void {
         $key = trim($key);
         $value = trim($value);
 
+        // Remove quotes safely
+        $value = trim($value, "\"'");
+
         putenv("$key=$value");
         $_ENV[$key] = $value;
     }
 }
 
-/* Load env from project root */
 loadEnv(__DIR__ . '/../.env');
 
 
 /* -------------------------------------------------
-   DB CONFIG (Railway uses env variables)
+   ENV HELPER
 -------------------------------------------------- */
 function envFirst(array $keys, $default = '') {
     foreach ($keys as $key) {
         $value = getenv($key);
-        if ($value !== false && $value !== '') {
-            return $value;
-        }
+        if ($value !== false && $value !== '') return $value;
     }
     return $default;
 }
 
-$mysqlUrl = envFirst(['MYSQL_URL', 'MYSQL_PUBLIC_URL'], '');
-$mysqlUrlParts = $mysqlUrl !== '' ? parse_url($mysqlUrl) : [];
 
+/* -------------------------------------------------
+   RAILWAY MYSQL SUPPORT
+-------------------------------------------------- */
+$mysqlUrl = envFirst(['MYSQL_URL', 'MYSQL_PUBLIC_URL'], '');
+$mysqlUrlParts = $mysqlUrl ? parse_url($mysqlUrl) : [];
+
+/* Host */
 define('DB_HOST', envFirst([
     'DB_HOST',
     'MYSQLHOST',
     'MYSQL_HOST'
 ], $mysqlUrlParts['host'] ?? 'localhost'));
 
+/* User */
 define('DB_USER', envFirst([
     'DB_USER',
     'MYSQLUSER',
     'MYSQL_USER'
 ], $mysqlUrlParts['user'] ?? 'root'));
 
+/* Password */
 define('DB_PASS', envFirst([
     'DB_PASS',
     'MYSQLPASSWORD',
@@ -68,12 +75,14 @@ define('DB_PASS', envFirst([
     'MYSQL_ROOT_PASSWORD'
 ], $mysqlUrlParts['pass'] ?? ''));
 
+/* DB Name (FIXED PATH ISSUE) */
 define('DB_NAME', envFirst([
     'DB_NAME',
     'MYSQLDATABASE',
     'MYSQL_DATABASE'
 ], isset($mysqlUrlParts['path']) ? ltrim($mysqlUrlParts['path'], '/') : ''));
 
+/* Port */
 define('DB_PORT', (int) envFirst([
     'DB_PORT',
     'MYSQLPORT',
@@ -84,13 +93,13 @@ define('DB_CHARSET', envFirst(['DB_CHARSET'], 'utf8mb4'));
 
 
 /* -------------------------------------------------
-   LOGGING (optional debug)
+   LOGGING
 -------------------------------------------------- */
-error_log("Database config loaded: " . DB_HOST . ":" . DB_PORT);
+error_log("DB CONFIG => " . DB_HOST . ":" . DB_PORT . " DB=" . DB_NAME);
 
 
 /* -------------------------------------------------
-   DB CONNECTION (Singleton)
+   CONNECTION
 -------------------------------------------------- */
 function getDBConnection(): mysqli {
 
@@ -113,7 +122,13 @@ function getDBConnection(): mysqli {
         } catch (Throwable $e) {
             error_log('[DB Connection Error] ' . $e->getMessage());
 
-            jsonResponse(false, 'Database connection failed.', [], 500);
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Database connection failed'
+            ]);
+
+            exit;
         }
     }
 
@@ -122,29 +137,26 @@ function getDBConnection(): mysqli {
 
 
 /* -------------------------------------------------
-   JSON RESPONSE HELPER
+   JSON RESPONSE
 -------------------------------------------------- */
 function jsonResponse(bool $success, string $message, array $data = [], int $httpCode = 200): void {
     http_response_code($httpCode);
     header('Content-Type: application/json; charset=utf-8');
 
-    echo json_encode(
-        array_merge([
-            'success' => $success,
-            'message' => $message
-        ], $data),
-        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
-    );
+    echo json_encode(array_merge([
+        'success' => $success,
+        'message' => $message
+    ], $data));
 
     exit;
 }
 
 
 /* -------------------------------------------------
-   SANITIZE (display only)
+   SANITIZE
 -------------------------------------------------- */
 function sanitize(string $value): string {
-    return htmlspecialchars(strip_tags(trim($value)), ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars(trim($value), ENT_QUOTES, 'UTF-8');
 }
 
 
@@ -156,8 +168,7 @@ function validateRequired(array $fields, array $source): array {
 
     foreach ($fields as $field) {
         if (!isset($source[$field]) || trim((string)$source[$field]) === '') {
-            $label = ucwords(str_replace('_', ' ', $field));
-            $errors[$field] = "$label is required.";
+            $errors[$field] = ucwords(str_replace('_', ' ', $field)) . " is required.";
         }
     }
 
@@ -171,62 +182,20 @@ function validateRequired(array $fields, array $source): array {
 function dbFetchAll(string $sql, string $types = '', array $params = []): array {
     $conn = getDBConnection();
 
-    try {
-        $stmt = $conn->prepare($sql);
+    $stmt = $conn->prepare($sql);
 
-        if ($types && $params) {
-            $stmt->bind_param($types, ...$params);
-        }
-
-        $stmt->execute();
-        $rows = [];
-
-        // Use mysqlnd path when available.
-        if (method_exists($stmt, 'get_result')) {
-            $result = $stmt->get_result();
-            if ($result !== false) {
-                $rows = $result->fetch_all(MYSQLI_ASSOC);
-                $result->free();
-                $stmt->close();
-                return $rows;
-            }
-        }
-
-        // Fallback for environments where get_result is unavailable.
-        $meta = $stmt->result_metadata();
-        if ($meta === false) {
-            $stmt->close();
-            return [];
-        }
-
-        $fields = [];
-        $row = [];
-        $bind = [];
-
-        while ($field = $meta->fetch_field()) {
-            $fields[] = $field->name;
-            $row[$field->name] = null;
-            $bind[] = &$row[$field->name];
-        }
-
-        call_user_func_array([$stmt, 'bind_result'], $bind);
-
-        while ($stmt->fetch()) {
-            $record = [];
-            foreach ($fields as $name) {
-                $record[$name] = $row[$name];
-            }
-            $rows[] = $record;
-        }
-
-        $meta->free();
-        $stmt->close();
-        return $rows;
-
-    } catch (Throwable $e) {
-        error_log('[dbFetchAll] ' . $e->getMessage());
-        return [];
+    if ($types && $params) {
+        $stmt->bind_param($types, ...$params);
     }
+
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $data = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+
+    $stmt->close();
+
+    return $data;
 }
 
 
@@ -240,36 +209,24 @@ function dbFetchOne(string $sql, string $types = '', array $params = []): ?array
 
 
 /* -------------------------------------------------
-   EXECUTE (INSERT / UPDATE / DELETE)
+   EXECUTE (FIXED bind_param BUG)
 -------------------------------------------------- */
 function dbExecute(string $sql, string $types = '', array $params = []) {
     $conn = getDBConnection();
 
-    try {
-        $stmt = $conn->prepare($sql);
+    $stmt = $conn->prepare($sql);
 
-        if ($types && $params) {
-            $bind = [$types];
-
-            foreach ($params as &$param) {
-                $bind[] = &$param;
-            }
-
-            call_user_func_array([$stmt, 'bind_param'], $bind);
-        }
-
-        $stmt->execute();
-
-        if (strpos(ltrim(strtoupper($sql)), 'INSERT') === 0) {
-            return (int)$conn->insert_id;
-        }
-
-        return (int)$stmt->affected_rows;
-
-    } catch (Throwable $e) {
-        error_log('[dbExecute] ' . $e->getMessage());
-        return false;
+    if ($types && $params) {
+        $stmt->bind_param($types, ...$params);
     }
+
+    $stmt->execute();
+
+    if (stripos($sql, 'INSERT') === 0) {
+        return $conn->insert_id;
+    }
+
+    return $stmt->affected_rows;
 }
 
 
