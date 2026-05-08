@@ -14,9 +14,10 @@ function loadEnv(string $path): void {
     $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
     foreach ($lines as $line) {
-        if (str_starts_with(trim($line), '#')) continue;
+        $trimmed = trim($line);
+        if ($trimmed === '' || strpos($trimmed, '#') === 0) continue;
 
-        if (!str_contains($line, '=')) continue;
+        if (strpos($line, '=') === false) continue;
 
         [$key, $value] = explode('=', $line, 2);
 
@@ -35,11 +36,11 @@ loadEnv(__DIR__ . '/../.env');
 /* -------------------------------------------------
    DB CONFIG (Railway uses env variables)
 -------------------------------------------------- */
-define('DB_HOST',    getenv('DB_HOST') ?: 'localhost');
-define('DB_USER',    getenv('DB_USER') ?: 'root');
-define('DB_PASS',    getenv('DB_PASS') ?: '');
-define('DB_NAME',    getenv('DB_NAME') ?: '');
-define('DB_PORT',    (int)(getenv('DB_PORT') ?: 3306));
+define('DB_HOST',    getenv('DB_HOST') ?: (getenv('MYSQLHOST') ?: 'localhost'));
+define('DB_USER',    getenv('DB_USER') ?: (getenv('MYSQLUSER') ?: 'root'));
+define('DB_PASS',    getenv('DB_PASS') ?: (getenv('MYSQLPASSWORD') ?: ''));
+define('DB_NAME',    getenv('DB_NAME') ?: (getenv('MYSQLDATABASE') ?: ''));
+define('DB_PORT',    (int)(getenv('DB_PORT') ?: (getenv('MYSQLPORT') ?: 3306)));
 define('DB_CHARSET', getenv('DB_CHARSET') ?: 'utf8mb4');
 
 
@@ -161,7 +162,7 @@ function dbFetchOne(string $sql, string $types = '', array $params = []): ?array
 /* -------------------------------------------------
    EXECUTE (INSERT / UPDATE / DELETE)
 -------------------------------------------------- */
-function dbExecute(string $sql, string $types = '', array $params = []): int|false {
+function dbExecute(string $sql, string $types = '', array $params = []) {
     $conn = getDBConnection();
 
     try {
@@ -179,7 +180,7 @@ function dbExecute(string $sql, string $types = '', array $params = []): int|fal
 
         $stmt->execute();
 
-        if (str_starts_with(ltrim(strtoupper($sql)), 'INSERT')) {
+        if (strpos(ltrim(strtoupper($sql)), 'INSERT') === 0) {
             return (int)$conn->insert_id;
         }
 
