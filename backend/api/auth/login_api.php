@@ -86,7 +86,7 @@ try {
         'redirect' => '../../frontend/pages/dashboard.php'
     ]);
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
     error_log('[Auth Login] ' . $e->getMessage());
     jsonResponse(false, 'A server error occurred. Please try again later.', [], 500);
 }

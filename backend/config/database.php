@@ -70,7 +70,7 @@ function getDBConnection(): mysqli {
 
             $conn->set_charset(DB_CHARSET);
 
-        } catch (mysqli_sql_exception $e) {
+        } catch (Throwable $e) {
             error_log('[DB Connection Error] ' . $e->getMessage());
 
             jsonResponse(false, 'Database connection failed.', [], 500);
@@ -139,11 +139,51 @@ function dbFetchAll(string $sql, string $types = '', array $params = []): array 
         }
 
         $stmt->execute();
-        $result = $stmt->get_result();
+        $rows = [];
 
-        return $result->fetch_all(MYSQLI_ASSOC);
+        // Use mysqlnd path when available.
+        if (method_exists($stmt, 'get_result')) {
+            $result = $stmt->get_result();
+            if ($result !== false) {
+                $rows = $result->fetch_all(MYSQLI_ASSOC);
+                $result->free();
+                $stmt->close();
+                return $rows;
+            }
+        }
 
-    } catch (mysqli_sql_exception $e) {
+        // Fallback for environments where get_result is unavailable.
+        $meta = $stmt->result_metadata();
+        if ($meta === false) {
+            $stmt->close();
+            return [];
+        }
+
+        $fields = [];
+        $row = [];
+        $bind = [];
+
+        while ($field = $meta->fetch_field()) {
+            $fields[] = $field->name;
+            $row[$field->name] = null;
+            $bind[] = &$row[$field->name];
+        }
+
+        call_user_func_array([$stmt, 'bind_result'], $bind);
+
+        while ($stmt->fetch()) {
+            $record = [];
+            foreach ($fields as $name) {
+                $record[$name] = $row[$name];
+            }
+            $rows[] = $record;
+        }
+
+        $meta->free();
+        $stmt->close();
+        return $rows;
+
+    } catch (Throwable $e) {
         error_log('[dbFetchAll] ' . $e->getMessage());
         return [];
     }
@@ -186,7 +226,7 @@ function dbExecute(string $sql, string $types = '', array $params = []) {
 
         return (int)$stmt->affected_rows;
 
-    } catch (mysqli_sql_exception $e) {
+    } catch (Throwable $e) {
         error_log('[dbExecute] ' . $e->getMessage());
         return false;
     }
