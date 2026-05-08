@@ -43,47 +43,128 @@ class SurveyResponseAPI {
         
         if ($action === 'get_responses' && $surveyId) {
             $this->getSurveyResponses($surveyId);
+        } elseif ($action === 'get_all_responses') {
+            $this->getAllSurveyResponses();
         } else {
             jsonResponse(false, 'Invalid action', [], 400);
         }
     }
-    
-    private function getSurveyResponses($surveyId) {
-        // Get all respondents for this survey
-        $respondents = dbFetchAll("SELECT * FROM qa_survey_respondents WHERE survey_id = ? ORDER BY submitted_at DESC", 'i', [$surveyId]);
-        
-        if (empty($respondents)) {
-            jsonResponse(true, 'No responses found', ['data' => []]);
-            return;
+
+    private function buildSurveyResponsePayload($surveyId) {
+        $survey = dbFetchOne(
+            "SELECT survey_id, title, target_group, status, start_date, end_date
+             FROM qa_surveys
+             WHERE survey_id = ?",
+            'i',
+            [$surveyId]
+        );
+
+        if (!$survey) {
+            return null;
         }
-        
-        // Get all questions for this survey
-        $questions = dbFetchAll("SELECT question_id, question_text, question_type FROM qa_survey_questions WHERE survey_id = ? ORDER BY sort_order", 'i', [$surveyId]);
-        $questionsMap = [];
-        foreach ($questions as $q) {
-            $questionsMap[$q['question_id']] = $q;
+
+        $questions = dbFetchAll(
+            "SELECT question_id, question_text, question_type, is_required, sort_order
+             FROM qa_survey_questions
+             WHERE survey_id = ?
+             ORDER BY sort_order",
+            'i',
+            [$surveyId]
+        );
+
+        $questionMap = [];
+        foreach ($questions as $question) {
+            $questionMap[$question['question_id']] = $question;
         }
-        
-        // Get answers for each respondent
+
+        $respondents = dbFetchAll(
+            "SELECT respondent_id, respondent_role, student_id, employee_id, submitted_at
+             FROM qa_survey_respondents
+             WHERE survey_id = ?
+             ORDER BY submitted_at DESC",
+            'i',
+            [$surveyId]
+        );
+
         foreach ($respondents as &$respondent) {
-            $answers = dbFetchAll("SELECT * FROM qa_survey_answers WHERE respondent_id = ?", 'i', [$respondent['respondent_id']]);
-            
+            $answers = dbFetchAll(
+                "SELECT a.question_id,
+                        a.option_id,
+                        a.rating_value,
+                        a.text_answer,
+                        q.question_text,
+                        q.question_type,
+                        o.option_text
+                 FROM qa_survey_answers a
+                 LEFT JOIN qa_survey_questions q ON a.question_id = q.question_id
+                 LEFT JOIN qa_question_options o ON a.option_id = o.option_id
+                 WHERE a.respondent_id = ?
+                 ORDER BY q.sort_order, a.answer_id",
+                'i',
+                [$respondent['respondent_id']]
+            );
+
             foreach ($answers as &$answer) {
-                $answer['question_text'] = $questionsMap[$answer['question_id']]['question_text'] ?? 'Unknown';
-                
-                // Get option text if option_id exists
-                if ($answer['option_id']) {
-                    $option = dbFetchOne("SELECT option_text FROM qa_question_options WHERE option_id = ?", 'i', [$answer['option_id']]);
-                    if ($option) {
-                        $answer['option_text'] = $option['option_text'];
-                    }
+                if (!$answer['question_text'] && isset($questionMap[$answer['question_id']])) {
+                    $answer['question_text'] = $questionMap[$answer['question_id']]['question_text'];
+                    $answer['question_type'] = $questionMap[$answer['question_id']]['question_type'];
                 }
+
+                $answer['display_value'] = $this->formatAnswerValue($answer);
             }
-            
+
             $respondent['answers'] = $answers;
         }
-        
-        jsonResponse(true, 'Responses loaded successfully', ['data' => $respondents]);
+
+        $survey['questions'] = $questions;
+        $survey['responses_count'] = count($respondents);
+        $survey['respondents'] = $respondents;
+
+        return $survey;
+    }
+
+    private function formatAnswerValue($answer) {
+        if ($answer['rating_value'] !== null && $answer['rating_value'] !== '') {
+            return (string) $answer['rating_value'];
+        }
+
+        if (!empty($answer['option_text'])) {
+            return $answer['option_text'];
+        }
+
+        if (!empty($answer['text_answer'])) {
+            return $answer['text_answer'];
+        }
+
+        return '-';
+    }
+    
+    private function getSurveyResponses($surveyId) {
+        $survey = $this->buildSurveyResponsePayload($surveyId);
+
+        if (!$survey) {
+            jsonResponse(false, 'Survey not found', [], 404);
+        }
+
+        jsonResponse(true, 'Responses loaded successfully', ['data' => $survey]);
+    }
+
+    private function getAllSurveyResponses() {
+        $surveys = dbFetchAll(
+            "SELECT survey_id, title, target_group, status, start_date, end_date
+             FROM qa_surveys
+             ORDER BY survey_id DESC"
+        );
+
+        $payload = [];
+        foreach ($surveys as $survey) {
+            $surveyData = $this->buildSurveyResponsePayload($survey['survey_id']);
+            if ($surveyData) {
+                $payload[] = $surveyData;
+            }
+        }
+
+        jsonResponse(true, 'All survey responses loaded successfully', ['data' => $payload]);
     }
     
     private function handlePost() {

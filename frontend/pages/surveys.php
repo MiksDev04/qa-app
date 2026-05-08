@@ -47,48 +47,121 @@ $pageTitle = 'Survey Management';
 
 
             <div class="qa-page">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h2 class="mb-1" style="font-size: 1.5rem; font-weight: 700;">Survey Management</h2>
-                        <p class="text-muted-qa">Create and manage surveys, view responses and analytics</p>
-                    </div>
-                    <button class="btn-primary-qa" id="createSurveyBtn">
-                        <i class="fa-solid fa-plus"></i> Create Survey
-                    </button>
-                </div>
+                <ul class="nav nav-tabs-custom" id="surveyPageTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="survey-tab" data-bs-toggle="tab" data-bs-target="#survey-tab-pane" type="button" role="tab" aria-controls="survey-tab-pane" aria-selected="true">
+                            <i class="fa-solid fa-clipboard-list me-2"></i> Survey
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="responses-tab" data-bs-toggle="tab" data-bs-target="#responses-tab-pane" type="button" role="tab" aria-controls="responses-tab-pane" aria-selected="false">
+                            <i class="fa-solid fa-comments me-2"></i> Response
+                        </button>
+                    </li>
+                </ul>
 
-                <!-- Surveys List -->
-                <div class="card">
-                    <div class="card-header-custom">
-                        <div class="card-title">
-                            <i class="fa-solid fa-chart-bar me-2"></i> All Surveys
+                <div class="tab-content" id="surveyPageTabContent">
+                    <div class="tab-pane fade show active" id="survey-tab-pane" role="tabpanel" aria-labelledby="survey-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h2 class="mb-1" style="font-size: 1.5rem; font-weight: 700;">Survey Management</h2>
+                                <p class="text-muted-qa">Create and manage surveys, view responses and analytics</p>
+                            </div>
+                            <button class="btn-primary-qa" id="createSurveyBtn">
+                                <i class="fa-solid fa-plus"></i> Create Survey
+                            </button>
                         </div>
-                        <div class="header-search" style="width: 250px;">
-                            <i class="fa-solid fa-search search-icon"></i>
-                            <input type="text" id="searchSurvey" placeholder="Search surveys..." class="form-control-qa" style="padding-left: 34px;">
+
+                        <!-- Surveys List -->
+                        <div class="card">
+                            <div class="card-header-custom">
+                                <div class="card-title">
+                                    <i class="fa-solid fa-chart-bar me-2"></i> All Surveys
+                                </div>
+                                <div class="header-search" style="width: 250px;">
+                                    <i class="fa-solid fa-search search-icon"></i>
+                                    <input type="text" id="searchSurvey" placeholder="Search surveys..." class="form-control-qa" style="padding-left: 34px;">
+                                </div>
+                            </div>
+                            <div class="card-body-custom">
+                                <div class="table-responsive">
+                                    <table class="table-qa">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Title</th>
+                                                <th>Target Group</th>
+                                                <th>Questions</th>
+                                                <th>Responses</th>
+                                                <th>Period</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="surveysTableBody">
+                                            <tr>
+                                                <td colspan="8" class="text-center">Loading surveys...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="card-body-custom">
-                        <div class="table-responsive">
-                            <table class="table-qa">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Title</th>
-                                        <th>Target Group</th>
-                                        <th>Questions</th>
-                                        <th>Responses</th>
-                                        <th>Period</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="surveysTableBody">
-                                    <tr>
-                                        <td colspan="8" class="text-center">Loading surveys...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+
+                    <div class="tab-pane fade" id="responses-tab-pane" role="tabpanel" aria-labelledby="responses-tab">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+                            <div>
+                                <h2 class="mb-1" style="font-size: 1.5rem; font-weight: 700;">Survey Responses</h2>
+                                <p class="text-muted-qa">Review every survey response and the answers submitted by respondents</p>
+                            </div>
+                            <button class="btn-outline-qa" id="refreshResponsesBtn" style="padding: 10px 16px;">
+                                <i class="fa-solid fa-rotate-right"></i> Refresh Responses
+                            </button>
+                        </div>
+
+                        <div id="responsesSummary" class="row g-3 mb-4"></div>
+                        <div id="allResponsesContainer">
+                            <div class="card">
+                                <div class="card-body-custom text-center py-5">
+                                    Loading responses...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Response Details Modal -->
+            <div class="modal fade" id="responseDetailsModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                    <div class="modal-content" style="border-radius: var(--radius-lg);">
+                        <div class="modal-header" style="border-bottom: 1px solid var(--border); padding: 20px 24px;">
+                            <div>
+                                <h5 class="modal-title mb-1" id="responseDetailsModalTitle" style="font-weight: 700;">Response Details</h5>
+                                <div class="text-muted-qa" id="responseDetailsModalSubtitle" style="font-size: .83rem;"></div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" id="responseDetailsModalBody" style="padding: 24px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete Survey Confirmation Modal -->
+            <div class="modal fade" id="deleteSurveyConfirmModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content" style="border-radius: var(--radius-lg);">
+                        <div class="modal-header" style="border-bottom: 1px solid var(--border); padding: 20px 24px;">
+                            <h5 class="modal-title" style="font-weight: 700; color: var(--accent-orange);">Delete Survey</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" style="padding: 24px;">
+                            <p class="mb-0">Are you sure you want to delete this survey? This will also delete all questions and responses. <strong>This action cannot be undone.</strong></p>
+                        </div>
+                        <div class="modal-footer" style="border-top: 1px solid var(--border); padding: 16px 24px;">
+                            <button type="button" class="btn-outline-qa" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-danger" id="confirmDeleteBtn" style="background-color: var(--accent-orange); color: #fff; border: none; padding: 8px 16px; border-radius: var(--radius); font-weight: 600;">Delete Survey</button>
                         </div>
                     </div>
                 </div>
@@ -170,22 +243,6 @@ $pageTitle = 'Survey Management';
                 </div>
             </div>
 
-            <!-- View Responses Modal -->
-            <div class="modal fade" id="responsesModal" tabindex="-1">
-                <div class="modal-dialog modal-xl">
-                    <div class="modal-content" style="border-radius: var(--radius-lg);">
-                        <div class="modal-header" style="border-bottom: 1px solid var(--border);">
-                            <h5 class="modal-title" id="responsesModalTitle">Survey Responses</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body" id="responsesModalBody" style="max-height: 70vh; overflow-y: auto;">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            
-
             <!-- Question Template -->
             <script id="questionTemplate" type="text/template">
                 <div class="question-item card mb-3" style="background: var(--bg-main); border: 1px solid var(--border);" data-question-index="{index}">
@@ -238,9 +295,13 @@ $pageTitle = 'Survey Management';
             <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
             <script>
                 let currentSurveyId = null;
+                let responsesLoaded = false;
+                let responseSurveyCache = [];
+                let pendingDeleteSurveyId = null;
 
                 $(document).ready(function() {
                     loadSurveys();
+                    loadAllResponses();
 
                     $('#createSurveyBtn').click(function() {
                         $('#surveyForm')[0].reset();
@@ -257,6 +318,17 @@ $pageTitle = 'Survey Management';
 
                     $('#addQuestionBtn').click(function() {
                         addQuestion();
+                    });
+
+                    $('#refreshResponsesBtn').click(function() {
+                        loadAllResponses(true);
+                    });
+
+                    $('#surveyPageTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function(event) {
+                        const target = $(event.target).attr('id');
+                        if (target === 'responses-tab' && !responsesLoaded) {
+                            loadAllResponses();
+                        }
                     });
 
                     $('#searchSurvey').on('keyup', function() {
@@ -281,6 +353,22 @@ $pageTitle = 'Survey Management';
                             container.hide();
                             container.html('');
                         }
+                    });
+
+                    $(document).on('click', '.view-response-details', function() {
+                        openResponseDetailsModal($(this).data('id'));
+                    });
+
+                    $('#confirmDeleteBtn').click(function() {
+                        if (pendingDeleteSurveyId) {
+                            performDeleteSurvey(pendingDeleteSurveyId);
+                            pendingDeleteSurveyId = null;
+                            bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteSurveyConfirmModal')).hide();
+                        }
+                    });
+
+                    $('#deleteSurveyConfirmModal').on('hidden.bs.modal', function() {
+                        pendingDeleteSurveyId = null;
                     });
                 });
 
@@ -356,6 +444,240 @@ $pageTitle = 'Survey Management';
                     });
                 }
 
+                function loadAllResponses(forceReload = false) {
+                    if (responsesLoaded && !forceReload) {
+                        return;
+                    }
+
+                    $('#responsesSummary').html('');
+                    $('#allResponsesContainer').html(`
+                        <div class="card">
+                            <div class="card-body-custom text-center py-5">
+                                Loading responses...
+                            </div>
+                        </div>
+                    `);
+
+                    $.ajax({
+                        url: '../../backend/api/survey_responses_api.php',
+                        type: 'GET',
+                        data: {
+                            action: 'get_all_responses'
+                        },
+                        dataType: 'json',
+                        success: function(response) {
+                            responsesLoaded = true;
+                            if (response.success && Array.isArray(response.data)) {
+                                responseSurveyCache = response.data;
+                                renderAllResponses(response.data);
+                            } else {
+                                responseSurveyCache = [];
+                                renderAllResponses([]);
+                            }
+                        },
+                        error: function() {
+                            responsesLoaded = true;
+                            responseSurveyCache = [];
+                            $('#responsesSummary').html('');
+                            $('#allResponsesContainer').html(`
+                                <div class="card">
+                                    <div class="card-body-custom text-center py-5">
+                                        Error loading responses.
+                                    </div>
+                                </div>
+                            `);
+                        }
+                    });
+                }
+
+                function renderAllResponses(surveys) {
+                    const summary = buildResponseSummary(surveys);
+                    $('#responsesSummary').html(summary);
+
+                    if (!surveys || surveys.length === 0) {
+                        $('#allResponsesContainer').html(`
+                            <div class="card">
+                                <div class="card-body-custom text-center py-5">
+                                    No surveys or responses found.
+                                </div>
+                            </div>
+                        `);
+                        return;
+                    }
+
+                    let html = '';
+                    surveys.forEach(survey => {
+                        html += renderSurveyResponsesCard(survey);
+                    });
+
+                    $('#allResponsesContainer').html(html);
+                }
+
+                function buildResponseSummary(surveys) {
+                    const totalSurveys = surveys.length;
+                    let totalResponses = 0;
+                    let totalAnswers = 0;
+
+                    surveys.forEach(survey => {
+                        totalResponses += survey.responses_count || 0;
+                        (survey.respondents || []).forEach(respondent => {
+                            totalAnswers += (respondent.answers || []).length;
+                        });
+                    });
+
+                    return `
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body-custom">
+                                    <div class="text-muted-qa small">Surveys</div>
+                                    <div style="font-size: 1.6rem; font-weight: 700;">${totalSurveys}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body-custom">
+                                    <div class="text-muted-qa small">Total Responses</div>
+                                    <div style="font-size: 1.6rem; font-weight: 700;">${totalResponses}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body-custom">
+                                    <div class="text-muted-qa small">Total Answers Loaded</div>
+                                    <div style="font-size: 1.6rem; font-weight: 700;">${totalAnswers}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                function renderSurveyResponsesCard(survey) {
+                    const statusBadge = getStatusBadge(survey.status);
+
+                    return `
+                        <div class="card mb-4 response-survey-card" data-survey-id="${survey.survey_id}">
+                            <div class="card-header-custom d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                                <div>
+                                    <div class="card-title mb-1">
+                                        <i class="fa-solid fa-file-lines me-2"></i> ${escapeHtml(survey.title || 'Untitled Survey')}
+                                    </div>
+                                    <div class="text-muted-qa small">
+                                        Survey ID ${survey.survey_id} · Target Group: ${escapeHtml(survey.target_group || 'N/A')} · ${escapeHtml(survey.start_date || 'N/A')} → ${escapeHtml(survey.end_date || 'N/A')}
+                                    </div>
+                                </div>
+                                <div class="text-end d-flex flex-column align-items-end gap-2">
+                                    <div class="mb-1">${statusBadge}</div>
+                                    <div class="text-muted-qa small">${survey.responses_count || 0} response(s)</div>
+                                    <button type="button" class="btn-primary-qa view-response-details" data-id="${survey.survey_id}" style="padding: 8px 14px; font-size: .875rem;">
+                                        <i class="fa-solid fa-eye me-1"></i> View Response Info
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                function openResponseDetailsModal(surveyId) {
+                    const survey = responseSurveyCache.find(item => String(item.survey_id) === String(surveyId));
+
+                    if (!survey) {
+                        toast.error('Response details are not loaded yet. Please refresh the Response tab.');
+                        return;
+                    }
+
+                    $('#responseDetailsModalTitle').text(`${survey.title || 'Untitled Survey'} - Response Details`);
+                    $('#responseDetailsModalSubtitle').text(`Survey ID ${survey.survey_id} · ${survey.responses_count || 0} response(s)`);
+                    $('#responseDetailsModalBody').html(renderResponseDetailsModalBody(survey));
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('responseDetailsModal')).show();
+                }
+
+                function renderResponseDetailsModalBody(survey) {
+                    const respondents = Array.isArray(survey.respondents) ? survey.respondents : [];
+
+                    if (respondents.length === 0) {
+                        return `
+                            <div class="text-center py-5">
+                                No responses have been submitted for this survey yet.
+                            </div>
+                        `;
+                    }
+
+                    let html = '';
+                    respondents.forEach((respondent, index) => {
+                        const answers = Array.isArray(respondent.answers) ? respondent.answers : [];
+
+                        let answerRows = '';
+                        if (answers.length === 0) {
+                            answerRows = `
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted-qa">No answers recorded for this response.</td>
+                                </tr>
+                            `;
+                        } else {
+                            answers.forEach(answer => {
+                                answerRows += `
+                                    <tr>
+                                        <td>${escapeHtml(answer.question_text || 'Unknown question')}</td>
+                                        <td>${escapeHtml(formatAnswerValue(answer))}</td>
+                                        <td>${escapeHtml(answer.question_type || '-')}</td>
+                                    </tr>
+                                `;
+                            });
+                        }
+
+                        html += `
+                            <div class="border rounded-3 p-3 mb-3 bg-white">
+                                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                                    <div>
+                                        <div style="font-weight: 700;">Respondent ${index + 1}</div>
+                                        <div class="text-muted-qa small">
+                                            ID ${respondent.respondent_id} · Role: ${escapeHtml(respondent.respondent_role || 'N/A')}${respondent.student_id ? ` · Student ID: ${escapeHtml(respondent.student_id)}` : ''}${respondent.employee_id ? ` · Employee ID: ${escapeHtml(respondent.employee_id)}` : ''}
+                                        </div>
+                                    </div>
+                                    <div class="text-muted-qa small">Submitted at ${escapeHtml(respondent.submitted_at || 'N/A')}</div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table-qa table-sm mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Question</th>
+                                                <th>Answer</th>
+                                                <th>Type</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${answerRows}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    return html;
+                }
+
+                function formatAnswerValue(answer) {
+                    if (answer.display_value !== undefined && answer.display_value !== null && String(answer.display_value).trim() !== '') {
+                        return answer.display_value;
+                    }
+
+                    if (answer.rating_value !== null && answer.rating_value !== undefined && String(answer.rating_value).trim() !== '') {
+                        return answer.rating_value;
+                    }
+
+                    if (answer.option_text) {
+                        return answer.option_text;
+                    }
+
+                    if (answer.text_answer) {
+                        return answer.text_answer;
+                    }
+
+                    return '-';
+                }
                 function getStatusBadge(status) {
                     const badges = {
                         'Active': 'badge-qa active',
@@ -496,86 +818,40 @@ $pageTitle = 'Survey Management';
                 }
 
                 function deleteSurvey(id) {
-                    if (confirm('Are you sure you want to delete this survey? This will also delete all questions and responses.')) {
-                        $.ajax({
-                            url: '../../backend/api/survey_api.php',
-                            type: 'DELETE',
-                            data: JSON.stringify({
-                                survey_id: id
-                            }),
-                            contentType: 'application/json',
-                            dataType: 'json',
-                            success: function(response) {
-                                if (response.success) {
-                                    toast.success(response.message, 'Deleted');
-                                    loadSurveys();
-                                } else {
-                                    toast.error(response.message, 'Error');
-                                }
-                            }
-                        });
-                    }
+                    pendingDeleteSurveyId = id;
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteSurveyConfirmModal')).show();
                 }
 
-                function viewResponses(surveyId) {
+                function performDeleteSurvey(id) {
                     $.ajax({
-                        url: '../../backend/api/survey_responses_api.php',
-                        type: 'GET',
-                        data: {
-                            action: 'get_responses',
-                            survey_id: surveyId
-                        },
+                        url: '../../backend/api/survey_api.php',
+                        type: 'DELETE',
+                        data: JSON.stringify({
+                            survey_id: id
+                        }),
+                        contentType: 'application/json',
                         dataType: 'json',
                         success: function(response) {
-                            if (response.success && response.data) {
-                                displayResponses(response.data);
+                            if (response.success) {
+                                toast.success(response.message, 'Deleted');
+                                loadSurveys();
                             } else {
-                                displayResponses(null, 'No responses yet');
+                                toast.error(response.message, 'Error');
                             }
+                        },
+                        error: function() {
+                            toast.error('Failed to delete survey', 'Error');
                         }
                     });
                 }
 
-                function displayResponses(responses, message = null) {
-                    let html = '';
-
-                    if (message || !responses || responses.length === 0) {
-                        html = `<div class="text-center py-5">${message || 'No responses found'}</div>`;
-                    } else {
-                        html = '<div class="table-responsive"><table class="table-qa"><thead><tr>';
-
-                        // Build headers
-                        if (responses[0] && responses[0].answers) {
-                            html += '<th>Respondent</th><th>Role</th><th>Submitted At</th>';
-                            responses[0].answers.forEach(answer => {
-                                html += `<th>${escapeHtml(answer.question_text.substring(0, 50))}...</th>`;
-                            });
-                            html += '</tr></thead><tbody>';
-
-                            // Build rows
-                            responses.forEach(resp => {
-                                html += `<tr>
-                    <td>${resp.respondent_id}</td>
-                    <td>${resp.respondent_role}</td>
-                    <td>${resp.submitted_at}</td>`;
-
-                                resp.answers.forEach(answer => {
-                                    let answerText = '';
-                                    if (answer.rating_value) answerText = answer.rating_value;
-                                    else if (answer.text_answer) answerText = answer.text_answer.substring(0, 100);
-                                    else if (answer.option_text) answerText = answer.option_text;
-                                    else answerText = '-';
-                                    html += `<td>${escapeHtml(answerText)}</td>`;
-                                });
-                                html += `</tr>`;
-                            });
-                            html += '</tbody></table></div>';
-                        }
+                function viewResponses(surveyId) {
+                    const tabTrigger = document.getElementById('responses-tab');
+                    if (tabTrigger) {
+                        bootstrap.Tab.getOrCreateInstance(tabTrigger).show();
                     }
 
-                    $('#responsesModalBody').html(html);
-                    $('#responsesModalTitle').text('Survey Responses');
-                    $('#responsesModal').modal('show');
+                    openResponseDetailsModal(surveyId);
                 }
 
                 function copySurveyLink(surveyId) {
@@ -698,5 +974,36 @@ $pageTitle = 'Survey Management';
                 .form-check-input:checked {
                     background-color: var(--primary);
                     border-color: var(--primary);
+                }
+
+                .nav-tabs-custom {
+                    border-bottom: 2px solid var(--border);
+                    margin-bottom: 1.5rem;
+                }
+
+                .nav-tabs-custom .nav-link {
+                    border: none;
+                    color: var(--text-secondary);
+                    font-weight: 600;
+                    padding: 0.75rem 1.5rem;
+                    transition: all var(--transition);
+                }
+
+                .nav-tabs-custom .nav-link:hover {
+                    color: var(--primary);
+                    background: transparent;
+                }
+
+                .nav-tabs-custom .nav-link.active {
+                    color: var(--primary);
+                    border-bottom: 3px solid var(--primary);
+                    background: transparent;
+                }
+
+                @media (max-width: 768px) {
+                    .nav-tabs-custom .nav-link {
+                        padding: 0.5rem 0.75rem;
+                        font-size: 0.85rem;
+                    }
                 }
             </style>
