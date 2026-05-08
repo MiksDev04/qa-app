@@ -76,8 +76,6 @@ define('DB_NAME', envFirst([
 /* Port */
 define('DB_PORT', (int) envFirst([
     'DB_PORT',
-    'MYSQLPORT',
-    'MYSQL_PORT'
 ], $mysqlUrlParts['port'] ?? 3306));
 
 define('DB_CHARSET', envFirst(['DB_CHARSET'], 'utf8mb4'));
