@@ -14,8 +14,8 @@ session_start();
 $base = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
 
 if (!empty($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
-    header('Location: ' . $base . 'frontend/pages/dashboard.php');
+    header('Location: ' . $base . '/frontend/pages/dashboard.php');
 } else {
-    header('Location: ' . $base . 'frontend/pages/login.php');
+    header('Location: ' . $base . '/frontend/pages/login.php');
 }
 exit;
