@@ -1,46 +1,50 @@
 <?php
-// DATABASE CONNECTION SETTINGS
-
+// DATABASE CONNECTION
 include '../../backend/config/database.php';
-
-try {
-    $pdo = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET, DB_USER, DB_PASS);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
-}
 
 // HANDLE FORM SUBMISSION
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $user = $_POST['username'];
+    $user = trim($_POST['username']);
     $pass = $_POST['password'];
-    $full = $_POST['full_name'];
-    $email = $_POST['email'];
+    $full = trim($_POST['full_name']);
+    $email = trim($_POST['email']);
     $role = $_POST['role'];
 
-    // Hash password (SECURE - recommended)
+    // Hash password (SECURE)
     $password_hash = password_hash($pass, PASSWORD_BCRYPT);
 
-    $sql = "INSERT INTO qa_users 
-            (username, password_hash, full_name, email, role, is_active)
-            VALUES 
-            (:username, :password_hash, :full_name, :email, :role, 1)";
-
-    $stmt = $pdo->prepare($sql);
-
     try {
-        $stmt->execute([
-            ':username' => $user,
-            ':password_hash' => $password_hash,
-            ':full_name' => $full,
-            ':email' => $email,
-            ':role' => $role
-        ]);
+        $conn = getDBConnection();
+
+        $sql = "INSERT INTO qa_users 
+                (username, password_hash, full_name, email, role, is_active)
+                VALUES (?, ?, ?, ?, ?, 1)";
+
+        $stmt = $conn->prepare($sql);
+
+        if (!$stmt) {
+            throw new Exception("Prepare failed: " . $conn->error);
+        }
+
+        // bind_param types:
+        // s = string
+        $stmt->bind_param(
+            "sssss",
+            $user,
+            $password_hash,
+            $full,
+            $email,
+            $role
+        );
+
+        $stmt->execute();
 
         echo "<p style='color:green;'>User created successfully!</p>";
 
-    } catch (PDOException $e) {
+        $stmt->close();
+
+    } catch (Throwable $e) {
         echo "<p style='color:red;'>Error: " . $e->getMessage() . "</p>";
     }
 }
