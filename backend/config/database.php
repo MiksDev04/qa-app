@@ -94,7 +94,6 @@ error_log("Database config loaded: " . DB_HOST . ":" . DB_PORT);
 -------------------------------------------------- */
 function getDBConnection(): mysqli {
 
-    echo 'Connection: ' . DB_HOST . ':' . DB_PORT . '/' . DB_NAME . '.' . DB_USER . "\n";
     static $conn = null;
 
     if ($conn === null) {

@@ -1,12 +1,7 @@
 <?php
 // DATABASE CONNECTION SETTINGS
 
-
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'qa_system');
-define('DB_CHARSET', 'utf8mb4');
+include '../../backend/config/database.php';
 
 try {
     $pdo = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET, DB_USER, DB_PASS);
