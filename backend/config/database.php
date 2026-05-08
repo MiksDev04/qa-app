@@ -56,30 +56,21 @@ $mysqlUrlParts = $mysqlUrl ? parse_url($mysqlUrl) : [];
 /* Host */
 define('DB_HOST', envFirst([
     'DB_HOST',
-    'MYSQLHOST',
-    'MYSQL_HOST'
 ], $mysqlUrlParts['host'] ?? 'localhost'));
 
 /* User */
 define('DB_USER', envFirst([
     'DB_USER',
-    'MYSQLUSER',
-    'MYSQL_USER'
 ], $mysqlUrlParts['user'] ?? 'root'));
 
 /* Password */
 define('DB_PASS', envFirst([
     'DB_PASS',
-    'MYSQLPASSWORD',
-    'MYSQL_PASSWORD',
-    'MYSQL_ROOT_PASSWORD'
 ], $mysqlUrlParts['pass'] ?? ''));
 
 /* DB Name (FIXED PATH ISSUE) */
 define('DB_NAME', envFirst([
     'DB_NAME',
-    'MYSQLDATABASE',
-    'MYSQL_DATABASE'
 ], isset($mysqlUrlParts['path']) ? ltrim($mysqlUrlParts['path'], '/') : ''));
 
 /* Port */
