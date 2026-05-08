@@ -36,12 +36,51 @@ loadEnv(__DIR__ . '/../.env');
 /* -------------------------------------------------
    DB CONFIG (Railway uses env variables)
 -------------------------------------------------- */
-define('DB_HOST',    getenv('DB_HOST') ?: (getenv('MYSQLHOST') ?: 'localhost'));
-define('DB_USER',    getenv('DB_USER') ?: (getenv('MYSQLUSER') ?: 'root'));
-define('DB_PASS',    getenv('DB_PASS') ?: (getenv('MYSQLPASSWORD') ?: ''));
-define('DB_NAME',    getenv('DB_NAME') ?: (getenv('MYSQLDATABASE') ?: ''));
-define('DB_PORT',    (int)(getenv('DB_PORT') ?: (getenv('MYSQLPORT') ?: 3306)));
-define('DB_CHARSET', getenv('DB_CHARSET') ?: 'utf8mb4');
+function envFirst(array $keys, $default = '') {
+    foreach ($keys as $key) {
+        $value = getenv($key);
+        if ($value !== false && $value !== '') {
+            return $value;
+        }
+    }
+    return $default;
+}
+
+$mysqlUrl = envFirst(['MYSQL_URL', 'MYSQL_PUBLIC_URL'], '');
+$mysqlUrlParts = $mysqlUrl !== '' ? parse_url($mysqlUrl) : [];
+
+define('DB_HOST', envFirst([
+    'DB_HOST',
+    'MYSQLHOST',
+    'MYSQL_HOST'
+], $mysqlUrlParts['host'] ?? 'localhost'));
+
+define('DB_USER', envFirst([
+    'DB_USER',
+    'MYSQLUSER',
+    'MYSQL_USER'
+], $mysqlUrlParts['user'] ?? 'root'));
+
+define('DB_PASS', envFirst([
+    'DB_PASS',
+    'MYSQLPASSWORD',
+    'MYSQL_PASSWORD',
+    'MYSQL_ROOT_PASSWORD'
+], $mysqlUrlParts['pass'] ?? ''));
+
+define('DB_NAME', envFirst([
+    'DB_NAME',
+    'MYSQLDATABASE',
+    'MYSQL_DATABASE'
+], isset($mysqlUrlParts['path']) ? ltrim($mysqlUrlParts['path'], '/') : ''));
+
+define('DB_PORT', (int) envFirst([
+    'DB_PORT',
+    'MYSQLPORT',
+    'MYSQL_PORT'
+], $mysqlUrlParts['port'] ?? 3306));
+
+define('DB_CHARSET', envFirst(['DB_CHARSET'], 'utf8mb4'));
 
 
 /* -------------------------------------------------
@@ -54,6 +93,8 @@ error_log("Database config loaded: " . DB_HOST . ":" . DB_PORT);
    DB CONNECTION (Singleton)
 -------------------------------------------------- */
 function getDBConnection(): mysqli {
+
+    echo 'Connection: ' . DB_HOST . ':' . DB_PORT . '/' . DB_NAME . '.' . DB_USER . "\n";
     static $conn = null;
 
     if ($conn === null) {
