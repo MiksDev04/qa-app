@@ -89,24 +89,6 @@ $userRole = htmlspecialchars($_SESSION['role'] ?? 'viewer');
 <script>
 /* Logout handler — placed here so it's available on every page */
 document.getElementById('logout-btn')?.addEventListener('click', function () {
-  const btn = this;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Signing out…';
-
-  $.ajax({
-    url : '<?= str_repeat('../', substr_count(basename($_SERVER['PHP_SELF']), '/') + 1) ?>backend/api/auth/logout.php',
-    type: 'POST',
-    dataType: 'json',
-    success(data) {
-      if (data.redirect) {
-        window.location.href = data.redirect;
-      } else {
-        window.location.href = 'login.php';
-      }
-    },
-    error() {
-      window.location.href = 'login.php';
-    }
-  });
+  window.location.href = 'logout.php';
 });
 </script>

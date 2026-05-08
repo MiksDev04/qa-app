@@ -5,55 +5,25 @@
  * backend/config/database.php
  */
 
-function loadEnvFile(string $path): array {
-    if (!is_readable($path)) {
-        return [];
+function env(string $key, $default = null) {
+    // Railway / server variables
+    $value = getenv($key);
+
+    if ($value !== false) {
+        return $value;
     }
 
-    $values = [];
-    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-
-    foreach ($lines as $line) {
-        $line = trim($line);
-
-        if ($line === '' || str_starts_with($line, '#')) {
-            continue;
-        }
-
-        $parts = explode('=', $line, 2);
-        if (count($parts) !== 2) {
-            continue;
-        }
-
-        [$key, $value] = $parts;
-        $key = trim($key);
-        $value = trim($value);
-
-        if ($value !== '') {
-            $firstChar = $value[0];
-            $lastChar = $value[strlen($value) - 1];
-
-            if ((($firstChar === '"') && ($lastChar === '"')) || (($firstChar === "'") && ($lastChar === "'"))) {
-                $value = substr($value, 1, -1);
-            }
-        }
-
-        if ($key !== '') {
-            $values[$key] = $value;
-        }
-    }
-
-    return $values;
+    // fallback to .env file
+    global $env;
+    return $env[$key] ?? $default;
 }
 
-$env = loadEnvFile(__DIR__ . '/../.env');
-
-define('DB_HOST',    $env['DB_HOST'] ?? 'localhost');
-define('DB_USER',    $env['DB_USER'] ?? 'root');
-define('DB_PASS',    $env['DB_PASS'] ?? '');
-define('DB_NAME',    $env['DB_NAME'] ?? 'qa_system');
-define('DB_PORT',    isset($env['DB_PORT']) ? (int) $env['DB_PORT'] : 3306);
-define('DB_CHARSET', $env['DB_CHARSET'] ?? 'utf8mb4');
+define('DB_HOST', env('DB_HOST', 'localhost'));
+define('DB_USER', env('DB_USER', 'root'));
+define('DB_PASS', env('DB_PASS', ''));
+define('DB_NAME', env('DB_NAME', 'qa_system'));
+define('DB_PORT', (int) env('DB_PORT', 3306));
+define('DB_CHARSET', env('DB_CHARSET', 'utf8mb4'));
 
 /**
  * Get a shared MySQLi connection (singleton).
