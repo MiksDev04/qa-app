@@ -164,14 +164,8 @@ $pageTitle = 'Survey Form';
             html += `
                     <div class="mb-4">
                         <label class="form-label-qa">Your Role <span class="text-danger">*</span></label>
-                        <select id="respondentRoleSelect" class="form-control-qa" required onchange="$('#respondentRole').val(this.value)">
-                            <option value="">Select your role</option>
-                            <option value="Student">Student</option>
-                            <option value="Alumni">Alumni</option>
-                            <option value="Employer">Employer</option>
-                            <option value="Faculty">Faculty</option>
-                            <option value="Staff">Staff</option>
-                        </select>
+                        <input disabled id="respondentRoleSelect" class="form-control-qa" value="${survey.target_group}"></input>
+                        
                     </div>
 
                     <div class="d-flex justify-content-between">

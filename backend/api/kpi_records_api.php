@@ -68,7 +68,7 @@ function getAllRecords() {
     $types = '';
     
     if ($year) {
-        $sql .= " AND r.period_year = ?";
+        $sql .= " AND r.school_year = ?";
         $params[] = $year;
         $types .= 's';
     }
@@ -85,7 +85,7 @@ function getAllRecords() {
         $types .= 'i';
     }
     
-    $sql .= " ORDER BY r.period_year DESC, r.record_id DESC";
+    $sql .= " ORDER BY r.school_year DESC, r.record_id DESC";
     
     $result = dbFetchAll($sql, $types, $params);
     
@@ -113,30 +113,30 @@ function createRecord() {
         jsonResponse(false, 'Invalid input data', [], 400);
     }
     
-    $errors = validateRequired(['indicator_id', 'period_year', 'period_term', 'actual_value'], $input);
+    $errors = validateRequired(['indicator_id', 'school_year', 'period_term', 'actual_value'], $input);
     if (!empty($errors)) {
         jsonResponse(false, 'Validation failed', ['errors' => $errors], 400);
     }
     
     $indicator_id = (int)$input['indicator_id'];
-    $period_year = sanitize($input['period_year']);
+    $school_year = sanitize($input['school_year']);
     $period_term = sanitize($input['period_term']);
     $actual_value = floatval($input['actual_value']);
     $remarks = sanitize($input['remarks'] ?? '');
     
     // Check if record already exists for this indicator, year, term
     $checkSql = "SELECT COUNT(*) as count FROM qa_kpi_records 
-                 WHERE indicator_id = ? AND period_year = ? AND period_term = ?";
-    $checkResult = dbFetchOne($checkSql, 'iss', [$indicator_id, $period_year, $period_term]);
+                 WHERE indicator_id = ? AND school_year = ? AND period_term = ?";
+    $checkResult = dbFetchOne($checkSql, 'iss', [$indicator_id, $school_year, $period_term]);
     
     if ($checkResult && $checkResult['count'] > 0) {
         jsonResponse(false, 'A record already exists for this indicator, year, and term', [], 400);
     }
     
-    $sql = "INSERT INTO qa_kpi_records (indicator_id, period_year, period_term, actual_value, remarks) 
+    $sql = "INSERT INTO qa_kpi_records (indicator_id, school_year, period_term, actual_value, remarks) 
             VALUES (?, ?, ?, ?, ?)";
     
-    $result = dbExecute($sql, 'issds', [$indicator_id, $period_year, $period_term, $actual_value, $remarks]);
+    $result = dbExecute($sql, 'issds', [$indicator_id, $school_year, $period_term, $actual_value, $remarks]);
     
     if ($result !== false) {
         jsonResponse(true, 'Record created successfully', ['record_id' => $result]);
@@ -153,17 +153,17 @@ function updateRecord($id) {
     }
     
     $indicator_id = isset($input['indicator_id']) ? (int)$input['indicator_id'] : 0;
-    $period_year = sanitize($input['period_year'] ?? '');
+    $school_year = sanitize($input['school_year'] ?? '');
     $period_term = sanitize($input['period_term'] ?? '');
     $actual_value = isset($input['actual_value']) ? floatval($input['actual_value']) : 0;
     $remarks = sanitize($input['remarks'] ?? '');
     
     $sql = "UPDATE qa_kpi_records SET 
-            indicator_id = ?, period_year = ?, period_term = ?, 
+            indicator_id = ?, school_year = ?, period_term = ?, 
             actual_value = ?, remarks = ? 
             WHERE record_id = ?";
     
-    $result = dbExecute($sql, 'issdsi', [$indicator_id, $period_year, $period_term, $actual_value, $remarks, $id]);
+    $result = dbExecute($sql, 'issdsi', [$indicator_id, $school_year, $period_term, $actual_value, $remarks, $id]);
     
     if ($result !== false) {
         jsonResponse(true, 'Record updated successfully');

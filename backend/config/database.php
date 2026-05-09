@@ -1,235 +1,190 @@
 <?php
 /**
- * Database Configuration — MySQLi (Railway Ready Fixed)
+ * Database Configuration — MySQLi
  * Quality Assurance Management System
  * backend/config/database.php
  */
 
-/* -------------------------------------------------
-   Load .env file (simple loader, no dependencies)
--------------------------------------------------- */
-function loadEnv(string $path): void {
-    if (!file_exists($path)) return;
+// Add this at the top of standards.php (API file) temporarily:
+error_log("Standards API called");
+error_log("GET params: " . print_r($_GET, true));
 
-    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+define('DB_HOST',    'localhost');
+define('DB_USER',    'root');
+define('DB_PASS',    '');
+define('DB_NAME',    'qa_system');
+define('DB_PORT',    3306);
+define('DB_CHARSET', 'utf8mb4');
 
-    foreach ($lines as $line) {
-        $line = trim($line);
-
-        if ($line === '' || $line[0] === '#') continue;
-        if (strpos($line, '=') === false) continue;
-
-        [$key, $value] = explode('=', $line, 2);
-
-        $key = trim($key);
-        $value = trim($value);
-
-        // Remove quotes safely
-        $value = trim($value, "\"'");
-
-        putenv("$key=$value");
-        $_ENV[$key] = $value;
-    }
-}
-
-loadEnv(__DIR__ . '/../.env');
-
-
-/* -------------------------------------------------
-   ENV HELPER
--------------------------------------------------- */
-function envFirst(array $keys, $default = '') {
-    foreach ($keys as $key) {
-        $value = getenv($key);
-        if ($value !== false && $value !== '') return $value;
-    }
-    return $default;
-}
-
-
-/* -------------------------------------------------
-   RAILWAY MYSQL SUPPORT
--------------------------------------------------- */
-$mysqlUrl = envFirst(['MYSQL_URL', 'MYSQL_PUBLIC_URL'], '');
-$mysqlUrlParts = $mysqlUrl ? parse_url($mysqlUrl) : [];
-
-/* Host */
-define('DB_HOST', envFirst([
-    'DB_HOST',
-], $mysqlUrlParts['host'] ?? 'localhost'));
-
-/* User */
-define('DB_USER', envFirst([
-    'DB_USER',
-], $mysqlUrlParts['user'] ?? 'root'));
-
-/* Password */
-define('DB_PASS', envFirst([
-    'DB_PASS',
-], $mysqlUrlParts['pass'] ?? ''));
-
-/* DB Name (FIXED PATH ISSUE) */
-define('DB_NAME', envFirst([
-    'DB_NAME',
-], isset($mysqlUrlParts['path']) ? ltrim($mysqlUrlParts['path'], '/') : ''));
-
-/* Port */
-define('DB_PORT', (int) envFirst([
-    'DB_PORT',
-], $mysqlUrlParts['port'] ?? 3306));
-
-define('DB_CHARSET', envFirst(['DB_CHARSET'], 'utf8mb4'));
-
-
-/* -------------------------------------------------
-   LOGGING
--------------------------------------------------- */
-error_log("DB CONFIG => " . DB_HOST . ":" . DB_PORT . " DB=" . DB_NAME);
-
-
-/* -------------------------------------------------
-   CONNECTION
--------------------------------------------------- */
+/**
+ * Get a shared MySQLi connection (singleton).
+ * Terminates with a JSON error response if connection fails.
+ */
 function getDBConnection(): mysqli {
-
     static $conn = null;
 
     if ($conn === null) {
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
         try {
-            $conn = new mysqli(
-                DB_HOST,
-                DB_USER,
-                DB_PASS,
-                DB_NAME,
-                DB_PORT
-            );
-
+            $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
             $conn->set_charset(DB_CHARSET);
-
-        } catch (Throwable $e) {
-            error_log('[DB Connection Error] ' . $e->getMessage());
-
-            http_response_code(500);
-            echo json_encode([
-                'success' => false,
-                'message' => 'Database connection failed'
-            ]);
-
-            exit;
+        } catch (mysqli_sql_exception $e) {
+            error_log('[DB Connection] ' . $e->getMessage());
+            jsonResponse(false, 'Database connection failed. Please contact the administrator.', [], 500);
         }
     }
 
     return $conn;
 }
 
-
-/* -------------------------------------------------
-   JSON RESPONSE
--------------------------------------------------- */
+/**
+ * Send a JSON response and stop execution.
+ *
+ * @param bool   $success
+ * @param string $message
+ * @param array  $data     Extra keys merged into the response object
+ * @param int    $httpCode HTTP status code
+ */
 function jsonResponse(bool $success, string $message, array $data = [], int $httpCode = 200): void {
     http_response_code($httpCode);
     header('Content-Type: application/json; charset=utf-8');
-
-    echo json_encode(array_merge([
-        'success' => $success,
-        'message' => $message
-    ], $data));
-
+    echo json_encode(
+        array_merge(['success' => $success, 'message' => $message], $data),
+        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+    );
     exit;
 }
 
-
-/* -------------------------------------------------
-   SANITIZE
--------------------------------------------------- */
+/**
+ * Sanitize a scalar value for safe output / storage.
+ * Always use prepared statements for DB queries — this is for display/logging only.
+ */
 function sanitize(string $value): string {
-    return htmlspecialchars(trim($value), ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars(strip_tags(trim($value)), ENT_QUOTES, 'UTF-8');
 }
 
-
-/* -------------------------------------------------
-   VALIDATION
--------------------------------------------------- */
+/**
+ * Validate that required fields are present and non-empty.
+ *
+ * @param string[] $fields  Field names to check
+ * @param array    $source  Data array (e.g. $_POST)
+ * @return array            Associative array of [ fieldName => errorMessage ]
+ */
 function validateRequired(array $fields, array $source): array {
     $errors = [];
-
     foreach ($fields as $field) {
-        if (!isset($source[$field]) || trim((string)$source[$field]) === '') {
-            $errors[$field] = ucwords(str_replace('_', ' ', $field)) . " is required.";
+        if (!isset($source[$field]) || trim((string) $source[$field]) === '') {
+            $label          = ucwords(str_replace('_', ' ', $field));
+            $errors[$field] = "{$label} is required.";
         }
     }
-
     return $errors;
 }
 
-
-/* -------------------------------------------------
-   FETCH ALL
--------------------------------------------------- */
+/**
+ * Execute a prepared MySQLi statement and return all rows.
+ *
+ * @param string $sql    SQL with ? placeholders
+ * @param string $types  Binding type string (e.g. 'ssi')
+ * @param array  $params Values matching the placeholders
+ * @return array         Array of associative rows
+ */
 function dbFetchAll(string $sql, string $types = '', array $params = []): array {
     $conn = getDBConnection();
 
-    $stmt = $conn->prepare($sql);
+    try {
+        $stmt = $conn->prepare($sql);
 
-    if ($types && $params) {
-        $stmt->bind_param($types, ...$params);
+        if ($stmt === false) {
+            throw new mysqli_sql_exception('Prepare failed: ' . $conn->error);
+        }
+
+        if ($types !== '' && count($params) > 0) {
+            $stmt->bind_param($types, ...$params);
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $rows   = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        return $rows;
+
+    } catch (mysqli_sql_exception $e) {
+        error_log('[dbFetchAll] ' . $e->getMessage() . ' | SQL: ' . $sql);
+        return [];
     }
-
-    $stmt->execute();
-
-    $result = $stmt->get_result();
-    $data = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-
-    $stmt->close();
-
-    return $data;
 }
 
-
-/* -------------------------------------------------
-   FETCH ONE
--------------------------------------------------- */
+/**
+ * Execute a prepared MySQLi statement and return a single row.
+ *
+ * @return array|null  Associative row or null if not found
+ */
 function dbFetchOne(string $sql, string $types = '', array $params = []): ?array {
     $rows = dbFetchAll($sql, $types, $params);
     return $rows[0] ?? null;
 }
 
-
-/* -------------------------------------------------
-   EXECUTE (FIXED bind_param BUG)
--------------------------------------------------- */
-function dbExecute(string $sql, string $types = '', array $params = []) {
+/**
+ * Execute an INSERT / UPDATE / DELETE prepared statement.
+ *
+ * @return int|false  insert_id for INSERT, affected_rows for UPDATE/DELETE, false on error
+ */
+function dbExecute(string $sql, string $types = '', array $params = []): int|false {
     $conn = getDBConnection();
 
-    $stmt = $conn->prepare($sql);
+    try {
+        $stmt = $conn->prepare($sql);
 
-    if ($types && $params) {
-        $stmt->bind_param($types, ...$params);
+        if ($stmt === false) {
+            throw new mysqli_sql_exception('Prepare failed: ' . $conn->error);
+        }
+
+        if ($types !== '' && count($params) > 0) {
+            // Build proper reference array for bind_param
+            $bindParams = [$types];
+            foreach ($params as &$param) {
+                $bindParams[] = &$param;
+            }
+            // Use call_user_func_array to properly pass references to bind_param
+            call_user_func_array([$stmt, 'bind_param'], $bindParams);
+        }
+
+        $stmt->execute();
+
+        // Return insert_id for INSERT statements, affected_rows otherwise
+        $result = str_starts_with(ltrim(strtoupper($sql)), 'INSERT')
+            ? (int) $conn->insert_id
+            : (int) $stmt->affected_rows;
+
+        $stmt->close();
+        return $result;
+
+    } catch (mysqli_sql_exception $e) {
+        error_log('[dbExecute] ' . $e->getMessage() . ' | SQL: ' . $sql);
+        return false;
     }
-
-    $stmt->execute();
-
-    if (stripos($sql, 'INSERT') === 0) {
-        return $conn->insert_id;
-    }
-
-    return $stmt->affected_rows;
 }
 
-
-/* -------------------------------------------------
-   TRANSACTIONS
--------------------------------------------------- */
+/**
+ * Begin a MySQLi transaction.
+ */
 function dbBegin(): void {
     getDBConnection()->begin_transaction();
 }
 
+/**
+ * Commit the current transaction.
+ */
 function dbCommit(): void {
     getDBConnection()->commit();
 }
 
+/**
+ * Roll back the current transaction.
+ */
 function dbRollback(): void {
     getDBConnection()->rollback();
 }

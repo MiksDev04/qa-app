@@ -81,7 +81,7 @@ class SurveyResponseAPI {
             "SELECT respondent_id, respondent_role, student_id, employee_id, submitted_at
              FROM qa_survey_respondents
              WHERE survey_id = ?
-             ORDER BY submitted_at DESC",
+             ORDER BY submitted_at ASC",
             'i',
             [$surveyId]
         );

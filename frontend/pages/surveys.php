@@ -88,7 +88,6 @@ $pageTitle = 'Survey Management';
                                     <table class="table-qa">
                                         <thead>
                                             <tr>
-                                                <th>ID</th>
                                                 <th>Title</th>
                                                 <th>Target Group</th>
                                                 <th>Questions</th>
@@ -400,7 +399,6 @@ $pageTitle = 'Survey Management';
                         const statusBadge = getStatusBadge(survey.status);
                         html += `
             <tr>
-                <td>${survey.survey_id}</td>
                 <td><strong>${escapeHtml(survey.title)}</strong></td>
                 <td>${survey.target_group}</td>
                 <td>${survey.questions_count || 0}</td>
@@ -446,7 +444,7 @@ $pageTitle = 'Survey Management';
 
                 function loadAllResponses(forceReload = false) {
                     if (responsesLoaded && !forceReload) {
-                        return;
+                        return $.Deferred().resolve(responseSurveyCache).promise();
                     }
 
                     $('#responsesSummary').html('');
@@ -458,35 +456,33 @@ $pageTitle = 'Survey Management';
                         </div>
                     `);
 
-                    $.ajax({
+                    return $.ajax({
                         url: '../../backend/api/survey_responses_api.php',
                         type: 'GET',
                         data: {
                             action: 'get_all_responses'
                         },
-                        dataType: 'json',
-                        success: function(response) {
-                            responsesLoaded = true;
-                            if (response.success && Array.isArray(response.data)) {
-                                responseSurveyCache = response.data;
-                                renderAllResponses(response.data);
-                            } else {
-                                responseSurveyCache = [];
-                                renderAllResponses([]);
-                            }
-                        },
-                        error: function() {
-                            responsesLoaded = true;
+                        dataType: 'json'
+                    }).done(function(response) {
+                        responsesLoaded = true;
+                        if (response.success && Array.isArray(response.data)) {
+                            responseSurveyCache = response.data;
+                            renderAllResponses(response.data);
+                        } else {
                             responseSurveyCache = [];
-                            $('#responsesSummary').html('');
-                            $('#allResponsesContainer').html(`
-                                <div class="card">
-                                    <div class="card-body-custom text-center py-5">
-                                        Error loading responses.
-                                    </div>
-                                </div>
-                            `);
+                            renderAllResponses([]);
                         }
+                    }).fail(function() {
+                        responsesLoaded = true;
+                        responseSurveyCache = [];
+                        $('#responsesSummary').html('');
+                        $('#allResponsesContainer').html(`
+                            <div class="card">
+                                <div class="card-body-custom text-center py-5">
+                                    Error loading responses.
+                                </div>
+                            </div>
+                        `);
                     });
                 }
 
@@ -505,12 +501,107 @@ $pageTitle = 'Survey Management';
                         return;
                     }
 
+                    // Show all respondent answers for all surveys
                     let html = '';
                     surveys.forEach(survey => {
-                        html += renderSurveyResponsesCard(survey);
+                        html += renderSurveyAnswers(survey);
                     });
 
                     $('#allResponsesContainer').html(html);
+                }
+
+                function renderSurveyAnswers(survey) {
+                    const respondents = Array.isArray(survey.respondents) ? survey.respondents : [];
+                    const statusBadge = getStatusBadge(survey.status);
+                    const surveyId = `survey_${survey.survey_id}`;
+
+                    let respondentHtml = '';
+
+                    if (respondents.length === 0) {
+                        respondentHtml = `
+                            <div class="text-center py-5 text-muted-qa">
+                                No responses submitted for this survey yet.
+                            </div>
+                        `;
+                    } else {
+                        respondentHtml = `
+                            <div class="accordion" id="respondentsAccordion_${survey.survey_id}">
+                        `;
+
+                        respondents.forEach((respondent, idx) => {
+                            const answers = Array.isArray(respondent.answers) ? respondent.answers : [];
+                            const collapseId = `respondent_${survey.survey_id}_${idx}`;
+
+                            let answerRows = '';
+                            if (answers.length === 0) {
+                                answerRows = `
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted-qa">No answers recorded.</td>
+                                    </tr>
+                                `;
+                            } else {
+                                answers.forEach(answer => {
+                                    answerRows += `
+                                        <tr>
+                                            <td>${escapeHtml(answer.question_text || 'Unknown')}</td>
+                                            <td>${escapeHtml(formatAnswerValue(answer))}</td>
+                                            <td><small class="text-muted-qa">${escapeHtml(answer.question_type || '-')}</small></td>
+                                        </tr>
+                                    `;
+                                });
+                            }
+
+                            respondentHtml += `
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false" aria-controls="${collapseId}" style="padding: 12px 16px; font-size: 0.95rem;">
+                                            <strong>Respondent ${idx + 1}</strong>
+                                            <span class="text-muted-qa" style="font-size: 0.85rem; margin-left: 12px;">  ${escapeHtml(respondent.submitted_at || 'N/A')}</span>
+                                        </button>
+                                    </h2>
+                                    <div id="${collapseId}" class="accordion-collapse collapse" data-bs-parent="#respondentsAccordion_${survey.survey_id}">
+                                        <div class="accordion-body" style="padding: 16px;">
+                                            <div class="text-muted-qa small mb-2">
+                                               Role: ${escapeHtml(respondent.respondent_role || 'N/A')}${respondent.student_id ? ` · Student ID: ${escapeHtml(respondent.student_id)}` : ''}${respondent.employee_id ? ` · Employee ID: ${escapeHtml(respondent.employee_id)}` : ''}
+                                            </div>
+                                            <div class="table-responsive">
+                                                <table class="table-qa table-sm mb-0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Question</th>
+                                                            <th>Answer</th>
+                                                            <th>Type</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        ${answerRows}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        respondentHtml += `</div>`;
+                    }
+
+                    return `
+                        <div class="card mb-4">
+                            <div class="card-header-custom">
+                                <div class="card-title mb-1">
+                                    <i class="fa-solid fa-file-lines me-2"></i> ${escapeHtml(survey.title || 'Untitled Survey')}
+                                </div>
+                                <div class="text-muted-qa small">
+                                    Survey ID ${survey.survey_id} · Target: ${escapeHtml(survey.target_group || 'N/A')} · ${survey.start_date || 'N/A'} → ${survey.end_date || 'N/A'} · ${respondents.length} response(s) · ${statusBadge}
+                                </div>
+                            </div>
+                            <div class="card-body-custom">
+                                ${respondentHtml}
+                            </div>
+                        </div>
+                    `;
                 }
 
                 function buildResponseSummary(surveys) {
@@ -587,9 +678,51 @@ $pageTitle = 'Survey Management';
                         return;
                     }
 
-                    $('#responseDetailsModalTitle').text(`${survey.title || 'Untitled Survey'} - Response Details`);
+                    // Compute global totals
+                    const totalSurveys = responseSurveyCache.length;
+                    let totalResponses = 0;
+                    let totalAnswers = 0;
+                    responseSurveyCache.forEach(s => {
+                        totalResponses += s.responses_count || 0;
+                        (s.respondents || []).forEach(r => {
+                            totalAnswers += (r.answers || []).length;
+                        });
+                    });
+
+                    $('#responseDetailsModalTitle').text(`${survey.title || 'Untitled Survey'}`);
                     $('#responseDetailsModalSubtitle').text(`Survey ID ${survey.survey_id} · ${survey.responses_count || 0} response(s)`);
-                    $('#responseDetailsModalBody').html(renderResponseDetailsModalBody(survey));
+
+                    // Show questions only
+                    const questions = Array.isArray(survey.questions) ? survey.questions : [];
+                    let questionsHtml = '';
+
+                    if (questions.length === 0) {
+                        questionsHtml = `
+                            <div class="text-center py-5 text-muted-qa">
+                                No questions defined for this survey.
+                            </div>
+                        `;
+                    } else {
+                        questions.forEach((q, idx) => {
+                            const optionsText = Array.isArray(q.options) && q.options.length > 0 ?
+                                q.options.map(opt => `• ${escapeHtml(opt.option_text || opt)}`).join('<br>') :
+                                'N/A';
+                            const required = q.is_required ? '<span class="badge" style="background-color: var(--accent-orange); color: white;">Required</span>' : '';
+
+                            questionsHtml += `
+                                <div class="border rounded-3 p-3 mb-3 bg-white">
+                                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                        <div style="font-weight: 700; flex: 1;">Q${idx + 1}. ${escapeHtml(q.question_text || 'Untitled')}</div>
+                                        <div>${required}</div>
+                                    </div>
+                                    <div class="text-muted-qa small mb-2">Type: <strong>${escapeHtml(q.question_type || 'Unknown')}</strong></div>
+                                    ${q.options && q.options.length > 0 ? `<div class="text-muted-qa small">Options:<br>${optionsText}</div>` : ''}
+                                </div>
+                            `;
+                        });
+                    }
+
+                    $('#responseDetailsModalBody').html(questionsHtml);
                     bootstrap.Modal.getOrCreateInstance(document.getElementById('responseDetailsModal')).show();
                 }
 
@@ -678,6 +811,7 @@ $pageTitle = 'Survey Management';
 
                     return '-';
                 }
+
                 function getStatusBadge(status) {
                     const badges = {
                         'Active': 'badge-qa active',
@@ -793,6 +927,7 @@ $pageTitle = 'Survey Management';
                         start_date: $('#surveyStartDate').val(),
                         end_date: $('#surveyEndDate').val(),
                         status: $('#surveyStatus').val(),
+                        action: $('#survey_id').val() ? 'update' : 'create',
                         questions: questions
                     };
 
@@ -846,12 +981,12 @@ $pageTitle = 'Survey Management';
                 }
 
                 function viewResponses(surveyId) {
-                    const tabTrigger = document.getElementById('responses-tab');
-                    if (tabTrigger) {
-                        bootstrap.Tab.getOrCreateInstance(tabTrigger).show();
-                    }
-
-                    openResponseDetailsModal(surveyId);
+                    // Do not switch to the Responses tab; load response data if needed and show details inline
+                    loadAllResponses().done(function() {
+                        openResponseDetailsModal(surveyId);
+                    }).fail(function() {
+                        toast.error('Failed to load response data.');
+                    });
                 }
 
                 function copySurveyLink(surveyId) {

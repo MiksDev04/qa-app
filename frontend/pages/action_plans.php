@@ -7,7 +7,7 @@ if (empty($_SESSION['logged_in'])) {
     exit;
 }
 
-$pageTitle = 'Standards & Policies';
+$pageTitle = 'Action Plans';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -93,47 +93,38 @@ $pageTitle = 'Standards & Policies';
 
             <div class="qa-page">
                 <!-- Tabs -->
-                 
-                <ul class="nav nav-tabs mb-4" id="mainTab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="standards-tab" data-bs-toggle="tab" data-bs-target="#standards" type="button" role="tab">
-                            <i class="fa-solid fa-book-bookmark me-2"></i>Standards
+
+
+                <div class="mb-2 d-flex justify-center items-center">
+                    <div>
+                        <h2 class="mb-0" style="font-size:1.25rem;font-weight:700;letter-spacing:-.4px;">
+                            Performance Improvement & Action Plans
+                        </h2>
+                        <p class="text-muted-qa mb-0" style="font-size:.83rem; margin-top:2px;">
+                            Manage your quality assurance performance improvement & action plans in one place. Create, edit, and organize all your plans to ensure training and continuous improvement across your institution.
+                        </p>
+                    </div>
+                    <div>
+                        <button class="btn-primary-qa" data-bs-toggle="modal" data-bs-target="#actionPlanModal" onclick="resetStandardForm()">
+                            <i class="fa-solid fa-plus"></i> Add Action Plans
                         </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="policies-tab" data-bs-toggle="tab" data-bs-target="#policies" type="button" role="tab">
-                            <i class="fa-solid fa-file-signature me-2"></i>Policies
-                        </button>
-                    </li>
-                </ul>
-                <div class="mb-2">
-                    <h2 class="mb-0" style="font-size:1.25rem;font-weight:700;letter-spacing:-.4px;">
-                        Standards & Policies
-                    </h2>
-                    <p class="text-muted-qa mb-0" style="font-size:.83rem; margin-top:2px;">
-                        Manage your quality assurance standards and policies in one place. Create, edit, and organize all your QA guidelines to ensure compliance and continuous improvement across your institution.
-                    </p>
+                    </div>
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-                    <div>
-                        <button class="btn-primary-qa" data-bs-toggle="modal" data-bs-target="#standardModal" onclick="resetStandardForm()">
-                            <i class="fa-solid fa-plus"></i> Add Standard
-                        </button>
-                        <button class="btn-outline-qa ms-2" data-bs-toggle="modal" data-bs-target="#policyModal" onclick="resetPolicyForm()">
-                            <i class="fa-solid fa-file-lines"></i> Add Policy
-                        </button>
-                    </div>
+
                     <div class="d-flex gap-2">
                         <div class="header-search" style="width: 250px;">
                             <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                            <input type="text" id="searchInput" placeholder="Search standards or policies..." class="form-control-qa" style="padding-left: 34px;">
+                            <input type="text" id="searchInput" placeholder="Search action plans..." class="form-control-qa" style="padding-left: 34px;">
                         </div>
                         <select id="statusFilter" class="form-control-qa" style="width: 130px;">
                             <option value="all">All Status</option>
-                            <option value="Active">Active</option>
-                            <option value="Archived">Archived</option>
+                            <option value="Active">Open</option>
+                            <option value="Archived">In Progress</option>
+                            <option value="Archived">Resolved</option>
+                            <option value="Archived">Closed</option>
                         </select>
                     </div>
                 </div>
@@ -146,38 +137,33 @@ $pageTitle = 'Standards & Policies';
                     <div class="tab-pane fade show active" id="standards" role="tabpanel">
                         <div id="standardsList"></div>
                     </div>
-
-                    <!-- Policies Tab -->
-                    <div class="tab-pane fade" id="policies" role="tabpanel">
-                        <div id="policiesList"></div>
-                    </div>
                 </div>
 
             </div><!-- /.qa-page -->
         </div><!-- /.qa-content -->
     </div><!-- /.qa-wrapper -->
 
-    <!-- STANDARD MODAL -->
-    <div class="modal fade" id="standardModal" data-bs-backdrop="static" tabindex="-1">
+    <!-- Action plans MODAL -->
+    <div class="modal fade" id="actionPlanModal" data-bs-backdrop="static" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content" style="border-radius: var(--radius-lg);">
                 <div class="modal-header" style="border-bottom-color: var(--border-light);">
                     <h5 class="modal-title" style="font-weight: 700;">
                         <i class="fa-solid fa-book-bookmark me-2" style="color: var(--primary);"></i>
-                        <span id="standardModalTitle">Add Standard</span>
+                        <span id="actionPlanModalTitle">Add Action Plan</span>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <form id="standardForm">
-                        <input type="hidden" id="standard_id" name="standard_id">
+                        <input type="hidden" id="action_id" name="action_id">
                         <div class="mb-3">
                             <label class="form-label-qa">Title <span class="text-danger">*</span></label>
                             <input type="text" class="form-control-qa" id="title" name="title" required>
                             <div class="form-error-msg" id="err-title"></div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label-qa">Body/Type <span class="text-danger">*</span></label>
+                            <label class="form-label-qa">Audit <span class="text-danger">*</span></label>
                             <select class="form-control-qa" id="body" name="body">
                                 <option value="CHED">CHED</option>
                                 <option value="ISO">ISO</option>
@@ -214,71 +200,13 @@ $pageTitle = 'Standards & Policies';
                 </div>
                 <div class="modal-footer" style="border-top-color: var(--border-light);">
                     <button type="button" class="btn-outline-qa" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn-primary-qa" id="saveStandardBtn">Save Standard</button>
+                    <button type="button" class="btn-primary-qa" id="saveStandardBtn">Save Action Plan</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- POLICY MODAL -->
-    <div class="modal fade" id="policyModal" data-bs-backdrop="static" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content" style="border-radius: var(--radius-lg);">
-                <div class="modal-header" style="border-bottom-color: var(--border-light);">
-                    <h5 class="modal-title" style="font-weight: 700;">
-                        <i class="fa-solid fa-file-signature me-2" style="color: var(--primary);"></i>
-                        <span id="policyModalTitle">Add Policy</span>
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="policyForm">
-                        <input type="hidden" id="policy_id" name="policy_id">
-                        <div class="mb-3">
-                            <label class="form-label-qa">Title <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control-qa" id="policy_title" name="title" required>
-                            <div class="form-error-msg" id="err-policy_title"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label-qa">Associated Standard</label>
-                            <select class="form-control-qa" id="standard_id_select" name="standard_id">
-                                <option value="">-- None / General Policy --</option>
-                            </select>
-                            <div class="form-error-msg" id="err-standard_id"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label-qa">Content <span class="text-danger">*</span></label>
-                            <textarea class="form-control-qa" id="content" name="content" rows="5" placeholder="Policy content..."></textarea>
-                            <div class="form-error-msg" id="err-content"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label-qa">Document URL (Optional)</label>
-                            <input type="url" class="form-control-qa" id="document_url" name="document_url" placeholder="https://...">
-                            <div class="form-error-msg" id="err-document_url"></div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label-qa">Created Date</label>
-                                <input type="date" class="form-control-qa" id="created_date" name="created_date">
-                                <div class="form-error-msg" id="err-created_date"></div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label-qa">Status</label>
-                                <select class="form-control-qa" id="policy_status" name="status">
-                                    <option value="Active">Active</option>
-                                    <option value="Archived">Archived</option>
-                                </select>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer" style="border-top-color: var(--border-light);">
-                    <button type="button" class="btn-outline-qa" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn-primary-qa" id="savePolicyBtn">Save Policy</button>
-                </div>
-            </div>
-        </div>
-    </div>
+   
 
     <!-- Delete Confirmation Modal -->
     <div class="modal fade" id="deleteModal" tabindex="-1">
@@ -390,10 +318,10 @@ $pageTitle = 'Standards & Policies';
                         <div class="d-flex justify-content-between align-items-center mt-2">
                             <small class="text-muted">v${standard.version || '1.0'} | ${standard.effective_date || 'N/A'}</small>
                             <div>
-                                <button class="btn btn-sm btn-outline-secondary me-1" onclick="editStandard(${standard.standard_id})" style="padding: 4px 8px;">
+                                <button class="btn btn-sm btn-outline-secondary me-1" onclick="editStandard(${standard.action_id})" style="padding: 4px 8px;">
                                     <i class="fa-solid fa-edit"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('standard', ${standard.standard_id})" style="padding: 4px 8px;">
+                                <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('standard', ${standard.action_id})" style="padding: 4px 8px;">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>
@@ -485,9 +413,9 @@ $pageTitle = 'Standards & Policies';
                     if (response.success) {
                         let options = '<option value="">-- None / General Policy --</option>';
                         response.data.forEach(standard => {
-                            options += `<option value="${standard.standard_id}">${escapeHtml(standard.title)}</option>`;
+                            options += `<option value="${standard.action_id}">${escapeHtml(standard.title)}</option>`;
                         });
-                        $('#standard_id_select').html(options);
+                        $('#action_id_select').html(options);
                     }
                 }
             });
@@ -495,8 +423,8 @@ $pageTitle = 'Standards & Policies';
 
         function resetStandardForm() {
             $('#standardForm')[0].reset();
-            $('#standard_id').val('');
-            $('#standardModalTitle').text('Add Standard');
+            $('#action_id').val('');
+            $('#actionPlanModalTitle').text('Add Action Plan');
             clearFormErrors('#standardForm');
         }
 
@@ -504,7 +432,7 @@ $pageTitle = 'Standards & Policies';
             $('#policyForm')[0].reset();
             $('#policy_id').val('');
             $('#policyModalTitle').text('Add Policy');
-            $('#standard_id_select').val('');
+            $('#action_id_select').val('');
             clearFormErrors('#policyForm');
         }
 
@@ -515,14 +443,14 @@ $pageTitle = 'Standards & Policies';
 
         function saveStandard() {
             const formData = {
-                standard_id: $('#standard_id').val(),
+                action_id: $('#action_id').val(),
                 title: $('#title').val(),
                 body: $('#body').val(),
                 description: $('#description').val(),
                 version: $('#version').val(),
                 effective_date: $('#effective_date').val(),
                 status: $('#status').val(),
-                action: $('#standard_id').val() ? 'update' : 'create'
+                action: $('#action_id').val() ? 'update' : 'create'
             };
 
             if (!formData.title) {
@@ -542,7 +470,7 @@ $pageTitle = 'Standards & Policies';
                 success: function(response) {
                     btnReset(btn[0]);
                     if (response.success) {
-                        $('#standardModal').modal('hide');
+                        $('#actionPlanModal').modal('hide');
                         toast.success(response.message);
                         loadStandards();
                         loadStandardsForDropdown();
@@ -564,7 +492,7 @@ $pageTitle = 'Standards & Policies';
             const formData = {
                 policy_id: $('#policy_id').val(),
                 title: $('#policy_title').val(),
-                standard_id: $('#standard_id_select').val(),
+                action_id: $('#action_id_select').val(),
                 content: $('#content').val(),
                 document_url: $('#document_url').val(),
                 created_date: $('#created_date').val(),
@@ -617,15 +545,15 @@ $pageTitle = 'Standards & Policies';
                 success: function(response) {
                     if (response.success && response.data) {
                         const std = response.data;
-                        $('#standard_id').val(std.standard_id);
+                        $('#action_id').val(std.action_id);
                         $('#title').val(std.title);
                         $('#body').val(std.body);
                         $('#description').val(std.description);
                         $('#version').val(std.version);
                         $('#effective_date').val(std.effective_date);
                         $('#status').val(std.status);
-                        $('#standardModalTitle').text('Edit Standard');
-                        $('#standardModal').modal('show');
+                        $('#actionPlanModalTitle').text('Edit Standard');
+                        $('#actionPlanModal').modal('show');
                         clearFormErrors('#standardForm');
                     } else {
                         toast.error('Failed to load standard data');
@@ -647,7 +575,7 @@ $pageTitle = 'Standards & Policies';
                         const pol = response.data;
                         $('#policy_id').val(pol.policy_id);
                         $('#policy_title').val(pol.title);
-                        $('#standard_id_select').val(pol.standard_id);
+                        $('#action_id_select').val(pol.action_id);
                         $('#content').val(pol.content);
                         $('#document_url').val(pol.document_url);
                         $('#created_date').val(pol.created_date);

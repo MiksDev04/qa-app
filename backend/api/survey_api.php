@@ -148,18 +148,18 @@ class SurveyAPI {
     }
     
     private function handlePost() {
-        $input = json_decode(file_get_contents('php://input'), true);
+        $data = json_decode(file_get_contents('php://input'), true);
         
-        if (!$input) {
+        if (!$data) {
             jsonResponse(false, 'Invalid input data', [], 400);
         }
         
-        $surveyId = $input['survey_id'] ?? null;
+        $action = $data['action'];
         
-        if ($surveyId) {
-            $this->updateSurvey($input);
+        if ($action == "update") {
+            $this->updateSurvey($data);
         } else {
-            $this->createSurvey($input);
+            $this->createSurvey($data);
         }
     }
     

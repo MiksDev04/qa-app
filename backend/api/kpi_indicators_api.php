@@ -128,21 +128,34 @@ function updateIndicator($id) {
 }
 
 function deleteIndicator($id) {
-    // Check if indicator has records
-    $checkSql = "SELECT COUNT(*) as count FROM qa_kpi_records WHERE indicator_id = ?";
-    $checkResult = dbFetchOne($checkSql, 'i', [$id]);
-    
-    if ($checkResult && $checkResult['count'] > 0) {
-        jsonResponse(false, 'Cannot delete indicator with existing records. Delete records first.', [], 400);
+     if ($id <= 0) {
+        jsonResponse(false, 'Invalid KPI ID');
     }
     
-    $sql = "DELETE FROM qa_indicators WHERE indicator_id = ?";
-    $result = dbExecute($sql, 'i', [$id]);
+    $conn = getDBConnection();
     
-    if ($result !== false) {
-        jsonResponse(true, 'Indicator deleted successfully');
+    // Check if standard has related policies
+    $checkStmt = $conn->prepare("SELECT COUNT(*) as count FROM qa_kpi_records WHERE indicator_id = ?");
+    $checkStmt->bind_param('i', $id);
+    $checkStmt->execute();
+    $result = $checkStmt->get_result();
+    $row = $result->fetch_assoc();
+    $checkStmt->close();
+    
+    if ($row['count'] > 0) {
+        jsonResponse(false, 'Cannot delete: This indicator has associated records. Delete it instead.');
+        return;
+    }
+    
+    $stmt = $conn->prepare("DELETE FROM qa_indicators WHERE indicator_id = ?");
+    $stmt->bind_param('i', $id);
+    
+    if ($stmt->execute()) {
+        $stmt->close();
+        jsonResponse(true, 'KPI deleted successfully');
     } else {
-        jsonResponse(false, 'Failed to delete indicator', [], 500);
+        $stmt->close();
+        jsonResponse(false, 'Failed to delete KPI');
     }
 }
 ?>

@@ -1,14 +1,5 @@
 <?php
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-/**
- * Login Page
- * frontend/pages/login.php
- * Redirect to dashboard if already logged in.
- */
-
 session_start();
 
 if (!empty($_SESSION['logged_in'])) {

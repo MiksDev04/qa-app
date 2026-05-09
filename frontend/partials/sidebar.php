@@ -61,7 +61,7 @@ function navLink(string $href, string $icon, string $label, string $current, str
       <?= navLink('standards.php', 'fa-book-bookmark','Standards',    $currentPage) ?>
       <?= navLink('audits.php',    'fa-clipboard-check','Audits',     $currentPage) ?>
       <?= navLink('surveys.php',   'fa-chart-bar',    'Surveys',      $currentPage) ?>
-      <?= navLink('kpis.php',      'fa-bullseye',     'KPIs',         $currentPage) ?>
+      <?= navLink('kpis.php',      'fa-bullseye',     'KPIs',          $currentPage) ?>
     </ul>
   </div>
 

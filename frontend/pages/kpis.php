@@ -104,16 +104,7 @@ $pageTitle = 'KPIs Management';
             <?php include '../partials/header.php'; ?>
 
             <div class="qa-page">
-                <div class="d-flex align-items-center justify-content-between mb-4">
-                    <div>
-                        <h2 class="mb-0" style="font-size:1.25rem;font-weight:700;letter-spacing:-.4px;">
-                            <i class="fa-solid fa-chart-line me-2"></i>KPIs Management
-                        </h2>
-                        <p class="text-muted-qa mb-0" style="font-size:.83rem; margin-top:2px;">
-                            Create and manage KPIs to track performance across various categories
-                        </p>
-                    </div>
-                </div>
+
                 <!-- Tabs Navigation -->
                 <ul class="nav nav-tabs-custom" id="kpiTabs" role="tablist">
                     <li class="nav-item" role="presentation">
@@ -129,6 +120,17 @@ $pageTitle = 'KPIs Management';
                         </button>
                     </li>
                 </ul>
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h2 class="mb-0" style="font-size:1.25rem;font-weight:700;letter-spacing:-.4px;">
+                            <i class="fa-solid fa-chart-line me-2"></i>KPIs Management
+                        </h2>
+                        <p class="text-muted-qa mb-0" style="font-size:.83rem; margin-top:2px;">
+                            Create and manage KPIs to track performance across various categories
+                        </p>
+                    </div>
+                </div>
+
 
                 <!-- Tab Content -->
                 <div class="tab-content" id="kpiTabContent">
@@ -148,7 +150,6 @@ $pageTitle = 'KPIs Management';
                                     <table class="table-qa" id="indicators-table">
                                         <thead>
                                             <tr>
-                                                <th>ID</th>
                                                 <th>Name</th>
                                                 <th>Category</th>
                                                 <th>Unit</th>
@@ -215,9 +216,8 @@ $pageTitle = 'KPIs Management';
                                     <table class="table-qa" id="records-table">
                                         <thead>
                                             <tr>
-                                                <th>ID</th>
                                                 <th>Indicator</th>
-                                                <th>Year</th>
+                                                <th>School Year</th>
                                                 <th>Term</th>
                                                 <th>Actual Value</th>
                                                 <th>Status</th>
@@ -330,7 +330,7 @@ $pageTitle = 'KPIs Management';
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label-qa">Year *</label>
-                                <select class="form-control-qa" id="record_year" name="period_year" required>
+                                <select class="form-control-qa" id="record_year" name="school_year" required>
                                     <option value="">Select Year</option>
                                 </select>
                                 <div class="form-error-msg"></div>
@@ -412,7 +412,7 @@ $pageTitle = 'KPIs Management';
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label-qa">Period Year</label>
+                            <label class="form-label-qa">School Year</label>
                             <select class="form-control-qa" id="import_year">
                                 <option value="">Select Year</option>
                             </select>
@@ -476,59 +476,58 @@ $pageTitle = 'KPIs Management';
         </div>
     </div>
 
-    
-<!-- Scripts -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../assets/js/app.js"></script>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/app.js"></script>
 
     <script>
-    let indicatorsData = [];
-    let deleteType = null;
-    let deleteId = null;
-    let externalDataCache = null;
+        let indicatorsData = [];
+        let deleteType = null;
+        let deleteId = null;
+        let externalDataCache = null;
 
-    // Listen to source change
-    $(document).on('change', '#import_source', function() {
-        toggleFieldSelector();
-        $('#import-data-preview').hide().html('');
-        $('#fetchBtn').show();
-        $('#importBtn').hide();
-        externalDataCache = null;
-    });
-
-    // Load Indicators Table
-    function loadIndicators() {
-        $.ajax({
-            url: '../../backend/api/kpi_indicators_api.php',
-            type: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                if (response.success && response.data) {
-                    indicatorsData = response.data;
-                    renderIndicatorsTable(response.data);
-                } else {
-                    $('#indicators-tbody').html('<tr><td colspan="7" class="text-center">No indicators found</td></tr>');
-                }
-            },
-            error: function() {
-                $('#indicators-tbody').html('<tr><td colspan="7" class="text-center">Error loading data</td></tr>');
-                toast.error('Failed to load indicators');
-            }
+        // Listen to source change
+        $(document).on('change', '#import_source', function() {
+            toggleFieldSelector();
+            $('#import-data-preview').hide().html('');
+            $('#fetchBtn').show();
+            $('#importBtn').hide();
+            externalDataCache = null;
         });
-    }
 
-    function renderIndicatorsTable(data) {
-        if (!data || data.length === 0) {
-            $('#indicators-tbody').html('<tr><td colspan="7" class="text-center">No indicators found</td></tr>');
-            return;
+        // Load Indicators Table
+        function loadIndicators() {
+            $.ajax({
+                url: '../../backend/api/kpi_indicators_api.php',
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        indicatorsData = response.data;
+                        renderIndicatorsTable(response.data);
+                    } else {
+                        $('#indicators-tbody').html('<tr><td colspan="7" class="text-center">No indicators found</td></tr>');
+                    }
+                },
+                error: function() {
+                    $('#indicators-tbody').html('<tr><td colspan="7" class="text-center">Error loading data</td></tr>');
+                    toast.error('Failed to load indicators');
+                }
+            });
         }
 
-        let html = '';
-        data.forEach(indicator => {
-            html += `
+        function renderIndicatorsTable(data) {
+            if (!data || data.length === 0) {
+                $('#indicators-tbody').html('<tr><td colspan="7" class="text-center">No indicators found</td></tr>');
+                return;
+            }
+
+            let html = '';
+            data.forEach(indicator => {
+                html += `
                 <tr>
-                    <td>${indicator.indicator_id}</td>
                     <td><strong>${escapeHtml(indicator.name)}</strong></td>
                     <td>${escapeHtml(indicator.category || '-')}</td>
                     <td>${escapeHtml(indicator.unit || '-')}</td>
@@ -544,68 +543,67 @@ $pageTitle = 'KPIs Management';
                     </td>
                 </tr>
             `;
-        });
-        $('#indicators-tbody').html(html);
-    }
-
-    // Load Records Table
-    function loadRecords() {
-        const year = $('#filter-year').val();
-        const term = $('#filter-term').val();
-        const indicator = $('#filter-indicator').val();
-
-        $.ajax({
-            url: '../../backend/api/kpi_records_api.php',
-            type: 'GET',
-            data: {
-                year: year,
-                term: term,
-                indicator_id: indicator
-            },
-            dataType: 'json',
-            success: function(response) {
-                if (response.success && response.data) {
-                    renderRecordsTable(response.data);
-                } else {
-                    $('#records-tbody').html('<tr><td colspan="8" class="text-center">No records found</td></tr>');
-                }
-            },
-            error: function() {
-                $('#records-tbody').html('<tr><td colspan="8" class="text-center">Error loading data</td></tr>');
-                toast.error('Failed to load records');
-            }
-        });
-    }
-
-    function renderRecordsTable(data) {
-        if (!data || data.length === 0) {
-            $('#records-tbody').html('<tr><td colspan="8" class="text-center">No records found</td></tr>');
-            return;
+            });
+            $('#indicators-tbody').html(html);
         }
 
-        let html = '';
-        data.forEach(record => {
-            const targetValue = parseFloat(record.target_value);
-            const actualValue = parseFloat(record.actual_value);
-            let status = '';
-            let statusClass = '';
+        // Load Records Table
+        function loadRecords() {
+            const year = $('#filter-year').val();
+            const term = $('#filter-term').val();
+            const indicator = $('#filter-indicator').val();
 
-            if (targetValue && !isNaN(targetValue) && !isNaN(actualValue) && actualValue >= targetValue) {
-                status = 'Achieved';
-                statusClass = 'badge-qa active';
-            } else if (targetValue && !isNaN(targetValue) && !isNaN(actualValue) && actualValue < targetValue) {
-                status = 'Below Target';
-                statusClass = 'badge-qa pending';
-            } else {
-                status = 'No Target';
-                statusClass = 'badge-qa';
+            $.ajax({
+                url: '../../backend/api/kpi_records_api.php',
+                type: 'GET',
+                data: {
+                    year: year,
+                    term: term,
+                    indicator_id: indicator
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        renderRecordsTable(response.data);
+                    } else {
+                        $('#records-tbody').html('<tr><td colspan="8" class="text-center">No records found</td></tr>');
+                    }
+                },
+                error: function() {
+                    $('#records-tbody').html('<tr><td colspan="8" class="text-center">Error loading data</td></tr>');
+                    toast.error('Failed to load records');
+                }
+            });
+        }
+
+        function renderRecordsTable(data) {
+            if (!data || data.length === 0) {
+                $('#records-tbody').html('<tr><td colspan="8" class="text-center">No records found</td></tr>');
+                return;
             }
 
-            html += `
+            let html = '';
+            data.forEach(record => {
+                const targetValue = parseFloat(record.target_value);
+                const actualValue = parseFloat(record.actual_value);
+                let status = '';
+                let statusClass = '';
+
+                if (targetValue && !isNaN(targetValue) && !isNaN(actualValue) && actualValue >= targetValue) {
+                    status = 'Achieved';
+                    statusClass = 'badge-qa active';
+                } else if (targetValue && !isNaN(targetValue) && !isNaN(actualValue) && actualValue < targetValue) {
+                    status = 'Below Target';
+                    statusClass = 'badge-qa pending';
+                } else {
+                    status = 'No Target';
+                    statusClass = 'badge-qa';
+                }
+
+                html += `
                 <tr>
-                    <td>${record.record_id}</td>
                     <td><strong>${escapeHtml(record.indicator_name)}</strong></td>
-                    <td>${record.period_year}</td>
+                    <td>${record.school_year}</td>
                     <td>${escapeHtml(record.period_term || '-')}</td>
                     <td>${record.actual_value} ${record.unit ? record.unit : ''}</td>
                     <td><span class="${statusClass}">${status}</span></td>
@@ -620,358 +618,360 @@ $pageTitle = 'KPIs Management';
                     </td>
                 </tr>
             `;
-        });
-        $('#records-tbody').html(html);
-    }
-
-    // Indicator CRUD
-    function openIndicatorModal() {
-        $('#indicatorModalTitle').text('Add Indicator');
-        $('#indicatorForm')[0].reset();
-        $('#indicator_id').val('');
-        $('#indicatorModal').modal('show');
-    }
-
-    function editIndicator(id) {
-        $.ajax({
-            url: `../../backend/api/kpi_indicators_api.php?id=${id}`,
-            type: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                if (response.success && response.data) {
-                    const indicator = response.data;
-                    $('#indicatorModalTitle').text('Edit Indicator');
-                    $('#indicator_id').val(indicator.indicator_id);
-                    $('#indicator_name').val(indicator.name);
-                    $('#indicator_description').val(indicator.description || '');
-                    $('#indicator_category').val(indicator.category || '');
-                    $('#indicator_unit').val(indicator.unit || '');
-                    $('#indicator_target').val(indicator.target_value || '');
-                    $('#indicator_benchmark').val(indicator.benchmark_source || '');
-                    $('#indicatorModal').modal('show');
-                }
-            },
-            error: function() {
-                toast.error('Error loading indicator data');
-            }
-        });
-    }
-
-    function saveIndicator() {
-        const id = $('#indicator_id').val();
-        const data = {
-            name: $('#indicator_name').val(),
-            description: $('#indicator_description').val(),
-            category: $('#indicator_category').val(),
-            unit: $('#indicator_unit').val(),
-            target_value: $('#indicator_target').val(),
-            benchmark_source: $('#indicator_benchmark').val()
-        };
-
-        if (!data.name || !data.category || !data.unit || !data.target_value) {
-            toast.error('Please fill in all required fields');
-            return;
+            });
+            $('#records-tbody').html(html);
         }
 
-        const url = id ? `../../backend/api/kpi_indicators_api.php?id=${id}` : '../../backend/api/kpi_indicators_api.php';
-        const method = id ? 'PUT' : 'POST';
-
-        $.ajax({
-            url: url,
-            type: method,
-            data: JSON.stringify(data),
-            contentType: 'application/json',
-            dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    toast.success(response.message || (id ? 'Indicator updated successfully' : 'Indicator added successfully'));
-                    $('#indicatorModal').modal('hide');
-                    loadIndicators();
-                    loadIndicatorDropdowns();
-                } else {
-                    toast.error(response.message || 'Operation failed');
-                }
-            },
-            error: function(xhr) {
-                const response = xhr.responseJSON;
-                toast.error(response?.message || 'An error occurred');
-            }
-        });
-    }
-
-    function deleteIndicator(id) {
-        deleteType = 'indicator';
-        deleteId = id;
-        $('#deleteModal').modal('show');
-    }
-
-    // Record CRUD
-    function loadIndicatorDropdowns() {
-        $.ajax({
-            url: '../../backend/api/kpi_indicators_api.php',
-            type: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                if (response.success && response.data) {
-                    let options = '<option value="">Select Indicator</option>';
-                    response.data.forEach(ind => {
-                        options += `<option value="${ind.indicator_id}">${escapeHtml(ind.name)} (${escapeHtml(ind.unit || 'no unit')})</option>`;
-                    });
-                    $('#record_indicator_id').html(options);
-                    $('#filter-indicator').html('<option value="">All Indicators</option>' + options);
-                    $('#import_indicator_id').html('<option value="">Select Indicator</option>' + options);
-                }
-            }
-        });
-    }
-
-    function loadYearDropdowns() {
-        const currentYear = new Date().getFullYear();
-        let options = '<option value="">Select Year</option>';
-        for (let i = currentYear - 5; i <= currentYear + 2; i++) {
-            options += `<option value="${i}">${i}</option>`;
-        }
-        $('#record_year, #import_year, #filter-year').html(options);
-        
-        // Auto-select current year
-        $('#import_year').val(currentYear);
-    }
-
-    function openRecordModal() {
-        $('#recordModalTitle').text('Add KPI Record');
-        $('#recordForm')[0].reset();
-        $('#record_id').val('');
-        $('#recordModal').modal('show');
-    }
-
-    function editRecord(id) {
-        $.ajax({
-            url: `../../backend/api/kpi_records_api.php?id=${id}`,
-            type: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                if (response.success && response.data) {
-                    const record = response.data;
-                    $('#recordModalTitle').text('Edit KPI Record');
-                    $('#record_id').val(record.record_id);
-                    $('#record_indicator_id').val(record.indicator_id);
-                    $('#record_year').val(record.period_year);
-                    $('#record_term').val(record.period_term);
-                    $('#record_actual').val(record.actual_value);
-                    $('#record_remarks').val(record.remarks || '');
-                    $('#recordModal').modal('show');
-                }
-            },
-            error: function() {
-                toast.error('Error loading record data');
-            }
-        });
-    }
-
-    function saveRecord() {
-        const id = $('#record_id').val();
-        const data = {
-            indicator_id: $('#record_indicator_id').val(),
-            period_year: $('#record_year').val(),
-            period_term: $('#record_term').val(),
-            actual_value: $('#record_actual').val(),
-            remarks: $('#record_remarks').val()
-        };
-
-        if (!data.indicator_id || !data.period_year || !data.period_term || !data.actual_value) {
-            toast.error('Please fill in all required fields');
-            return;
+        // Indicator CRUD
+        function openIndicatorModal() {
+            $('#indicatorModalTitle').text('Add Indicator');
+            $('#indicatorForm')[0].reset();
+            $('#indicator_id').val('');
+            $('#indicatorModal').modal('show');
         }
 
-        const url = id ? `../../backend/api/kpi_records_api.php?id=${id}` : '../../backend/api/kpi_records_api.php';
-        const method = id ? 'PUT' : 'POST';
-
-        $.ajax({
-            url: url,
-            type: method,
-            data: JSON.stringify(data),
-            contentType: 'application/json',
-            dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    toast.success(response.message || (id ? 'Record updated successfully' : 'Record added successfully'));
-                    $('#recordModal').modal('hide');
-                    loadRecords();
-                } else {
-                    toast.error(response.message || 'Operation failed');
-                }
-            },
-            error: function(xhr) {
-                const response = xhr.responseJSON;
-                toast.error(response?.message || 'An error occurred');
-            }
-        });
-    }
-
-    function deleteRecord(id) {
-        deleteType = 'record';
-        deleteId = id;
-        $('#deleteModal').modal('show');
-    }
-
-    // Delete confirmation handler
-    $('#confirmDeleteBtn').on('click', function() {
-        if (deleteType === 'indicator') {
+        function editIndicator(id) {
             $.ajax({
-                url: `../../backend/api/kpi_indicators_api.php?id=${deleteId}`,
-                type: 'DELETE',
+                url: `../../backend/api/kpi_indicators_api.php?id=${id}`,
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        const indicator = response.data;
+                        $('#indicatorModalTitle').text('Edit Indicator');
+                        $('#indicator_id').val(indicator.indicator_id);
+                        $('#indicator_name').val(indicator.name);
+                        $('#indicator_description').val(indicator.description || '');
+                        $('#indicator_category').val(indicator.category || '');
+                        $('#indicator_unit').val(indicator.unit || '');
+                        $('#indicator_target').val(indicator.target_value || '');
+                        $('#indicator_benchmark').val(indicator.benchmark_source || '');
+                        $('#indicatorModal').modal('show');
+                    }
+                },
+                error: function() {
+                    toast.error('Error loading indicator data');
+                }
+            });
+        }
+
+        function saveIndicator() {
+            const id = $('#indicator_id').val();
+            const data = {
+                name: $('#indicator_name').val(),
+                description: $('#indicator_description').val(),
+                category: $('#indicator_category').val(),
+                unit: $('#indicator_unit').val(),
+                target_value: $('#indicator_target').val(),
+                benchmark_source: $('#indicator_benchmark').val()
+            };
+
+            if (!data.name || !data.category || !data.unit || !data.target_value) {
+                toast.error('Please fill in all required fields');
+                return;
+            }
+
+            const url = id ? `../../backend/api/kpi_indicators_api.php?id=${id}` : '../../backend/api/kpi_indicators_api.php';
+            const method = id ? 'PUT' : 'POST';
+
+            $.ajax({
+                url: url,
+                type: method,
+                data: JSON.stringify(data),
+                contentType: 'application/json',
                 dataType: 'json',
                 success: function(response) {
                     if (response.success) {
-                        toast.success(response.message || 'Indicator deleted successfully');
-                        $('#deleteModal').modal('hide');
+                        toast.success(response.message || (id ? 'Indicator updated successfully' : 'Indicator added successfully'));
+                        $('#indicatorModal').modal('hide');
                         loadIndicators();
                         loadIndicatorDropdowns();
                     } else {
-                        toast.error(response.message || 'Delete failed');
-                        $('#deleteModal').modal('hide');
+                        toast.error(response.message || 'Operation failed');
+                    }
+                },
+                error: function(xhr) {
+                    const response = xhr.responseJSON;
+                    toast.error(response?.message || 'An error occurred');
+                }
+            });
+        }
+
+        function deleteIndicator(id) {
+            deleteType = 'indicator';
+            deleteId = id;
+            $('#deleteModal').modal('show');
+        }
+
+        // Record CRUD
+        function loadIndicatorDropdowns() {
+            $.ajax({
+                url: '../../backend/api/kpi_indicators_api.php',
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        let options = '<option value="">Select Indicator</option>';
+                        response.data.forEach(ind => {
+                            options += `<option value="${ind.indicator_id}">${escapeHtml(ind.name)} (${escapeHtml(ind.unit || 'no unit')})</option>`;
+                        });
+                        $('#record_indicator_id').html(options);
+                        $('#filter-indicator').html('<option value="">All Indicators</option>' + options);
+                        $('#import_indicator_id').html('<option value="">Select Indicator</option>' + options);
+                    }
+                }
+            });
+        }
+
+        function loadYearDropdowns() {
+            const currentYear = new Date().getFullYear();
+            let options = '<option value="">Select Year</option>';
+            for (let i = currentYear - 5; i <= currentYear + 2; i++) {
+                let nextYear = i;
+                nextYear++;
+                options += `<option value="${i} - ${nextYear}">${i} - ${nextYear}</option>`;
+            }
+            $('#record_year, #import_year, #filter-year').html(options);
+
+            // Auto-select current year
+            $('#import_year').val(currentYear);
+        }
+
+        function openRecordModal() {
+            $('#recordModalTitle').text('Add KPI Record');
+            $('#recordForm')[0].reset();
+            $('#record_id').val('');
+            $('#recordModal').modal('show');
+        }
+
+        function editRecord(id) {
+            $.ajax({
+                url: `../../backend/api/kpi_records_api.php?id=${id}`,
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        const record = response.data;
+                        $('#recordModalTitle').text('Edit KPI Record');
+                        $('#record_id').val(record.record_id);
+                        $('#record_indicator_id').val(record.indicator_id);
+                        $('#record_year').val(record.school_year);
+                        $('#record_term').val(record.period_term);
+                        $('#record_actual').val(record.actual_value);
+                        $('#record_remarks').val(record.remarks || '');
+                        $('#recordModal').modal('show');
                     }
                 },
                 error: function() {
-                    toast.error('Error deleting indicator');
-                    $('#deleteModal').modal('hide');
+                    toast.error('Error loading record data');
                 }
             });
-        } else if (deleteType === 'record') {
+        }
+
+        function saveRecord() {
+            const id = $('#record_id').val();
+            const data = {
+                indicator_id: $('#record_indicator_id').val(),
+                school_year: $('#record_year').val(),
+                period_term: $('#record_term').val(),
+                actual_value: $('#record_actual').val(),
+                remarks: $('#record_remarks').val()
+            };
+
+            if (!data.indicator_id || !data.school_year || !data.period_term || !data.actual_value) {
+                toast.error('Please fill in all required fields');
+                return;
+            }
+
+            const url = id ? `../../backend/api/kpi_records_api.php?id=${id}` : '../../backend/api/kpi_records_api.php';
+            const method = id ? 'PUT' : 'POST';
+
             $.ajax({
-                url: `../../backend/api/kpi_records_api.php?id=${deleteId}`,
-                type: 'DELETE',
+                url: url,
+                type: method,
+                data: JSON.stringify(data),
+                contentType: 'application/json',
                 dataType: 'json',
                 success: function(response) {
                     if (response.success) {
-                        toast.success(response.message || 'Record deleted successfully');
-                        $('#deleteModal').modal('hide');
+                        toast.success(response.message || (id ? 'Record updated successfully' : 'Record added successfully'));
+                        $('#recordModal').modal('hide');
                         loadRecords();
                     } else {
-                        toast.error(response.message || 'Delete failed');
-                        $('#deleteModal').modal('hide');
+                        toast.error(response.message || 'Operation failed');
                     }
                 },
-                error: function() {
-                    toast.error('Error deleting record');
-                    $('#deleteModal').modal('hide');
+                error: function(xhr) {
+                    const response = xhr.responseJSON;
+                    toast.error(response?.message || 'An error occurred');
                 }
             });
         }
-    });
 
-    // Import External Data
-    function openImportModal() {
-        $('#import_source').val('lms');
-        $('#import_indicator_id').val('');
-        $('#import_term').val('');
-        $('#import-data-preview').hide().html('');
-        $('#lms-field-selector').hide();
-        $('#faculty-field-selector').hide();
-        $('#fetchBtn').show();
-        $('#importBtn').hide();
-        
-        // Auto-select current year
-        const currentYear = new Date().getFullYear();
-        $('#import_year').val(currentYear);
-        
-        toggleFieldSelector();
-        $('#importModal').modal('show');
-    }
-
-    function toggleFieldSelector() {
-        const source = $('#import_source').val();
-        if (source === 'lms') {
-            $('#lms-field-selector').show();
-            $('#faculty-field-selector').hide();
-        } else if (source === 'faculty_eval') {
-            $('#lms-field-selector').hide();
-            $('#faculty-field-selector').show();
-        } else {
-            $('#lms-field-selector').hide();
-            $('#faculty-field-selector').hide();
+        function deleteRecord(id) {
+            deleteType = 'record';
+            deleteId = id;
+            $('#deleteModal').modal('show');
         }
-    }
 
-    function fetchExternalData() {
-        const source = $('#import_source').val();
-        const indicatorId = $('#import_indicator_id').val();
-        const year = $('#import_year').val();
-        const term = $('#import_term').val();
+        // Delete confirmation handler
+        $('#confirmDeleteBtn').on('click', function() {
+            if (deleteType === 'indicator') {
+                $.ajax({
+                    url: `../../backend/api/kpi_indicators_api.php?id=${deleteId}`,
+                    type: 'DELETE',
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            toast.success(response.message || 'Indicator deleted successfully');
+                            $('#deleteModal').modal('hide');
+                            loadIndicators();
+                            loadIndicatorDropdowns();
+                        } else {
+                            toast.error(response.message || 'Delete failed');
+                            $('#deleteModal').modal('hide');
+                        }
+                    },
+                    error: function() {
+                        toast.error('Error deleting indicator');
+                        $('#deleteModal').modal('hide');
+                    }
+                });
+            } else if (deleteType === 'record') {
+                $.ajax({
+                    url: `../../backend/api/kpi_records_api.php?id=${deleteId}`,
+                    type: 'DELETE',
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            toast.success(response.message || 'Record deleted successfully');
+                            $('#deleteModal').modal('hide');
+                            loadRecords();
+                        } else {
+                            toast.error(response.message || 'Delete failed');
+                            $('#deleteModal').modal('hide');
+                        }
+                    },
+                    error: function() {
+                        toast.error('Error deleting record');
+                        $('#deleteModal').modal('hide');
+                    }
+                });
+            }
+        });
 
-        let selectedField = '';
-        if (source === 'lms') {
-            selectedField = $('#import_lms_field').val();
-            if (!selectedField) {
-                toast.error('Please select a data field to import');
+        // Import External Data
+        function openImportModal() {
+            $('#import_source').val('lms');
+            $('#import_indicator_id').val('');
+            $('#import_term').val('');
+            $('#import-data-preview').hide().html('');
+            $('#lms-field-selector').hide();
+            $('#faculty-field-selector').hide();
+            $('#fetchBtn').show();
+            $('#importBtn').hide();
+
+            // Auto-select current year
+            const currentYear = new Date().getFullYear();
+            $('#import_year').val(currentYear);
+
+            toggleFieldSelector();
+            $('#importModal').modal('show');
+        }
+
+        function toggleFieldSelector() {
+            const source = $('#import_source').val();
+            if (source === 'lms') {
+                $('#lms-field-selector').show();
+                $('#faculty-field-selector').hide();
+            } else if (source === 'faculty_eval') {
+                $('#lms-field-selector').hide();
+                $('#faculty-field-selector').show();
+            } else {
+                $('#lms-field-selector').hide();
+                $('#faculty-field-selector').hide();
+            }
+        }
+
+        function fetchExternalData() {
+            const source = $('#import_source').val();
+            const indicatorId = $('#import_indicator_id').val();
+            const year = $('#import_year').val();
+            const term = $('#import_term').val();
+
+            let selectedField = '';
+            if (source === 'lms') {
+                selectedField = $('#import_lms_field').val();
+                if (!selectedField) {
+                    toast.error('Please select a data field to import');
+                    return;
+                }
+            } else if (source === 'faculty_eval') {
+                selectedField = $('#import_faculty_field').val();
+                if (!selectedField) {
+                    toast.error('Please select a data field to import');
+                    return;
+                }
+            }
+
+            if (!indicatorId) {
+                toast.error('Please select an indicator');
                 return;
             }
-        } else if (source === 'faculty_eval') {
-            selectedField = $('#import_faculty_field').val();
-            if (!selectedField) {
-                toast.error('Please select a data field to import');
+
+            if (!year) {
+                toast.error('Please select a year');
                 return;
             }
-        }
 
-        if (!indicatorId) {
-            toast.error('Please select an indicator');
-            return;
-        }
+            const fetchBtn = $('#fetchBtn');
+            const originalText = fetchBtn.html();
+            fetchBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Fetching...');
 
-        if (!year) {
-            toast.error('Please select a year');
-            return;
-        }
+            $.ajax({
+                url: '../../backend/api/lms_external_api.php',
+                type: 'POST',
+                data: JSON.stringify({
+                    action: 'fetch_external',
+                    source: source,
+                    indicator_id: indicatorId,
+                    year: year,
+                    term: term,
+                    field: selectedField
+                }),
+                contentType: 'application/json',
+                dataType: 'json',
+                success: function(response) {
+                    fetchBtn.prop('disabled', false).html(originalText);
 
-        const fetchBtn = $('#fetchBtn');
-        const originalText = fetchBtn.html();
-        fetchBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Fetching...');
+                    if (response.success && response.data) {
+                        let actualValue = null;
+                        let fieldLabel = '';
 
-        $.ajax({
-            url: '../../backend/api/lms_external_api.php',
-            type: 'POST',
-            data: JSON.stringify({
-                action: 'fetch_external',
-                source: source,
-                indicator_id: indicatorId,
-                year: year,
-                term: term,
-                field: selectedField
-            }),
-            contentType: 'application/json',
-            dataType: 'json',
-            success: function(response) {
-                fetchBtn.prop('disabled', false).html(originalText);
+                        if (source === 'lms') {
+                            fieldLabel = $('#import_lms_field option:selected').text();
+                            actualValue = response.data[selectedField];
+                        } else {
+                            fieldLabel = $('#import_faculty_field option:selected').text();
+                            actualValue = response.data[selectedField];
+                        }
 
-                if (response.success && response.data) {
-                    let actualValue = null;
-                    let fieldLabel = '';
+                        if (actualValue === undefined || actualValue === null) {
+                            toast.error(`Field "${fieldLabel}" not found in the response data`);
+                            return;
+                        }
 
-                    if (source === 'lms') {
-                        fieldLabel = $('#import_lms_field option:selected').text();
-                        actualValue = response.data[selectedField];
-                    } else {
-                        fieldLabel = $('#import_faculty_field option:selected').text();
-                        actualValue = response.data[selectedField];
-                    }
+                        externalDataCache = {
+                            actual_value: actualValue,
+                            year: year,
+                            term: term,
+                            source: source,
+                            field: selectedField,
+                            field_label: fieldLabel,
+                            full_data: response.data
+                        };
 
-                    if (actualValue === undefined || actualValue === null) {
-                        toast.error(`Field "${fieldLabel}" not found in the response data`);
-                        return;
-                    }
-
-                    externalDataCache = {
-                        actual_value: actualValue,
-                        year: year,
-                        term: term,
-                        source: source,
-                        field: selectedField,
-                        field_label: fieldLabel,
-                        full_data: response.data
-                    };
-
-                    let previewHtml = `
+                        let previewHtml = `
                         <div style="padding:15px;">
                             <h6><i class="fa-solid fa-check-circle" style="color:var(--accent-green);"></i> Data Retrieved:</h6>
                             <hr>
@@ -985,94 +985,94 @@ $pageTitle = 'KPIs Management';
                             </details>
                         </div>
                     `;
-                    $('#import-data-preview').html(previewHtml).show();
-                    $('#fetchBtn').hide();
-                    $('#importBtn').show();
-                    toast.success('External data retrieved successfully');
-                } else {
-                    toast.error(response.message || 'No data available for the selected period');
-                    $('#import-data-preview').html('<div class="alert alert-warning">No data found for the selected criteria</div>').show();
+                        $('#import-data-preview').html(previewHtml).show();
+                        $('#fetchBtn').hide();
+                        $('#importBtn').show();
+                        toast.success('External data retrieved successfully');
+                    } else {
+                        toast.error(response.message || 'No data available for the selected period');
+                        $('#import-data-preview').html('<div class="alert alert-warning">No data found for the selected criteria</div>').show();
+                    }
+                },
+                error: function(xhr) {
+                    fetchBtn.prop('disabled', false).html(originalText);
+                    console.error('API Error:', xhr);
+                    let errorMsg = 'Error fetching external data';
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        errorMsg = response.message || errorMsg;
+                    } catch (e) {}
+                    toast.error(errorMsg);
                 }
-            },
-            error: function(xhr) {
-                fetchBtn.prop('disabled', false).html(originalText);
-                console.error('API Error:', xhr);
-                let errorMsg = 'Error fetching external data';
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    errorMsg = response.message || errorMsg;
-                } catch(e) {}
-                toast.error(errorMsg);
-            }
-        });
-    }
-
-    function importData() {
-        if (!externalDataCache) {
-            toast.error('No data to import');
-            return;
+            });
         }
 
-        const data = {
-            indicator_id: $('#import_indicator_id').val(),
-            period_year: externalDataCache.year,
-            period_term: externalDataCache.term,
-            actual_value: externalDataCache.actual_value,
-            remarks: `Imported from ${$('#import_source').val()} - Field: ${externalDataCache.field_label}`
-        };
-
-        const importBtn = $('#importBtn');
-        const originalText = importBtn.html();
-        importBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Importing...');
-
-        $.ajax({
-            url: '../../backend/api/kpi_records_api.php',
-            type: 'POST',
-            data: JSON.stringify(data),
-            contentType: 'application/json',
-            dataType: 'json',
-            success: function(response) {
-                importBtn.prop('disabled', false).html(originalText);
-
-                if (response.success) {
-                    toast.success('Data imported successfully');
-                    $('#importModal').modal('hide');
-                    loadRecords();
-                    externalDataCache = null;
-                    $('#fetchBtn').show();
-                    $('#importBtn').hide();
-                } else {
-                    toast.error(response.message || 'Import failed');
-                }
-            },
-            error: function(xhr) {
-                importBtn.prop('disabled', false).html(originalText);
-                const response = xhr.responseJSON;
-                toast.error(response?.message || 'Error importing data');
+        function importData() {
+            if (!externalDataCache) {
+                toast.error('No data to import');
+                return;
             }
+
+            const data = {
+                indicator_id: $('#import_indicator_id').val(),
+                school_year: externalDataCache.year,
+                period_term: externalDataCache.term,
+                actual_value: externalDataCache.actual_value,
+                remarks: `Imported from ${$('#import_source').val()} - Field: ${externalDataCache.field_label}`
+            };
+
+            const importBtn = $('#importBtn');
+            const originalText = importBtn.html();
+            importBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Importing...');
+
+            $.ajax({
+                url: '../../backend/api/kpi_records_api.php',
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                dataType: 'json',
+                success: function(response) {
+                    importBtn.prop('disabled', false).html(originalText);
+
+                    if (response.success) {
+                        toast.success('Data imported successfully');
+                        $('#importModal').modal('hide');
+                        loadRecords();
+                        externalDataCache = null;
+                        $('#fetchBtn').show();
+                        $('#importBtn').hide();
+                    } else {
+                        toast.error(response.message || 'Import failed');
+                    }
+                },
+                error: function(xhr) {
+                    importBtn.prop('disabled', false).html(originalText);
+                    const response = xhr.responseJSON;
+                    toast.error(response?.message || 'Error importing data');
+                }
+            });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // Event Listeners
+        $(document).ready(function() {
+            loadIndicators();
+            loadRecords();
+            loadIndicatorDropdowns();
+            loadYearDropdowns();
+
+            $('#filter-year, #filter-term, #filter-indicator').on('change', loadRecords);
         });
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-
-    // Event Listeners
-    $(document).ready(function() {
-        loadIndicators();
-        loadRecords();
-        loadIndicatorDropdowns();
-        loadYearDropdowns();
-
-        $('#filter-year, #filter-term, #filter-indicator').on('change', loadRecords);
-    });
-</script>
+    </script>
 
 </body>
 
