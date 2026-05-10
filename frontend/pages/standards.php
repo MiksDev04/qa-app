@@ -93,7 +93,7 @@ $pageTitle = 'Standards & Policies';
 
             <div class="qa-page">
                 <!-- Tabs -->
-                 
+
                 <ul class="nav nav-tabs mb-4" id="mainTab" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="standards-tab" data-bs-toggle="tab" data-bs-target="#standards" type="button" role="tab">
@@ -118,11 +118,11 @@ $pageTitle = 'Standards & Policies';
                 <!-- Action Buttons -->
                 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
                     <div>
-                        <button class="btn-primary-qa" data-bs-toggle="modal" data-bs-target="#standardModal" onclick="resetStandardForm()">
+                        <button class="btn-primary-qa" id="addStandardBtn" data-bs-toggle="modal" data-bs-target="#standardModal" onclick="resetStandardForm()">
                             <i class="fa-solid fa-plus"></i> Add Standard
                         </button>
-                        <button class="btn-outline-qa ms-2" data-bs-toggle="modal" data-bs-target="#policyModal" onclick="resetPolicyForm()">
-                            <i class="fa-solid fa-file-lines"></i> Add Policy
+                        <button class="btn-primary-qa d-none" id="addPolicyBtn" data-bs-toggle="modal" data-bs-target="#policyModal" onclick="resetPolicyForm()">
+                            <i class="fa-solid fa-plus"></i> Add Policy
                         </button>
                     </div>
                     <div class="d-flex gap-2">
@@ -312,6 +312,7 @@ $pageTitle = 'Standards & Policies';
             loadStandards();
             loadPolicies();
             loadStandardsForDropdown();
+            updateActionButtons();
 
             // Search and filter
             $('#searchInput').on('keyup', function() {
@@ -336,7 +337,18 @@ $pageTitle = 'Standards & Policies';
             $('#savePolicyBtn').click(function() {
                 savePolicy();
             });
+
+            $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function() {
+                updateActionButtons();
+            });
         });
+
+        function updateActionButtons() {
+            const isStandardsTab = $('#standards-tab').hasClass('active');
+
+            $('#addStandardBtn').toggleClass('d-none', !isStandardsTab);
+            $('#addPolicyBtn').toggleClass('d-none', isStandardsTab);
+        }
 
         function loadStandards() {
             const search = $('#searchInput').val();

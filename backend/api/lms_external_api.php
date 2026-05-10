@@ -14,8 +14,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-define('LMS_API_URL', 'https://artisanslms.onrender.com/backend/api/export_student_performance.php');
-define('LMS_API_KEY', '0fvBAvRhGAkES6QVHXYojIVDQq5iPiRl');
+$envFile = __DIR__ . '/../.env';
+$envValues = is_file($envFile) ? parse_ini_file($envFile, false, INI_SCANNER_RAW) : [];
+
+define('LMS_API_URL', $envValues['LMS_API_URL'] ?? 'https://artisanslms.onrender.com/backend/api/export_student_performance.php');
+define('LMS_API_KEY', $envValues['LMS_API_KEY'] ?? '');
+
+if (LMS_API_KEY === '') {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'LMS API configuration is missing']);
+    exit();
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

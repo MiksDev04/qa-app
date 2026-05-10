@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Sidebar Partial
  * Include this file in every authenticated page.
@@ -11,23 +12,24 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 
 // Guard — redirect to login if not authenticated
 if (empty($_SESSION['logged_in'])) {
-    header('Location: ../pages/login.php');
-    exit;
+  header('Location: ../pages/login.php');
+  exit;
 }
 
 $currentUser  = [
-    'name'   => htmlspecialchars($_SESSION['full_name'] ?? 'User'),
-    'role'   => htmlspecialchars($_SESSION['role']      ?? 'viewer'),
-    'initials' => strtoupper(substr($_SESSION['full_name'] ?? 'U', 0, 1)
-                           . substr(strrchr($_SESSION['full_name'] ?? '', ' '), 1, 1)),
+  'name'   => htmlspecialchars($_SESSION['full_name'] ?? 'User'),
+  'role'   => htmlspecialchars($_SESSION['role']      ?? 'viewer'),
+  'initials' => strtoupper(substr($_SESSION['full_name'] ?? 'U', 0, 1)
+    . substr(strrchr($_SESSION['full_name'] ?? '', ' '), 1, 1)),
 ];
 
 $currentPage = basename($_SERVER['PHP_SELF']);
 
-function navLink(string $href, string $icon, string $label, string $current, string $badge = ''): string {
-    $active = ($current === $href) ? ' active' : '';
-    $badgeHtml = $badge ? "<span class=\"nav-badge\">{$badge}</span>" : '';
-    return <<<HTML
+function navLink(string $href, string $icon, string $label, string $current, string $badge = ''): string
+{
+  $active = ($current === $href) ? ' active' : '';
+  $badgeHtml = $badge ? "<span class=\"nav-badge\">{$badge}</span>" : '';
+  return <<<HTML
     <li>
       <a href="{$href}" class="{$active}">
         <span class="nav-icon"><i class="fa-solid {$icon}"></i></span>
@@ -58,8 +60,8 @@ function navLink(string $href, string $icon, string $label, string $current, str
     <div class="sidebar-section-label">Main</div>
     <ul class="sidebar-nav">
       <?= navLink('dashboard.php', 'fa-gauge-high',   'Dashboard',    $currentPage) ?>
-      <?= navLink('standards.php', 'fa-book-bookmark','Standards',    $currentPage) ?>
-      <?= navLink('audits.php',    'fa-clipboard-check','Audits',     $currentPage) ?>
+      <?= navLink('standards.php', 'fa-book-bookmark', 'Standards',    $currentPage) ?>
+      <?= navLink('audits.php',    'fa-clipboard-check', 'Audits',     $currentPage) ?>
       <?= navLink('surveys.php',   'fa-chart-bar',    'Surveys',      $currentPage) ?>
       <?= navLink('kpis.php',      'fa-bullseye',     'KPIs',          $currentPage) ?>
     </ul>
@@ -71,9 +73,6 @@ function navLink(string $href, string $icon, string $label, string $current, str
     <ul class="sidebar-nav">
       <?= navLink('action_plans.php', 'fa-list-check',  'Action Plans', $currentPage) ?>
       <?= navLink('reports.php',      'fa-file-lines',  'Reports',      $currentPage) ?>
-      <?php if ($currentUser['role'] === 'admin'): ?>
-        <?= navLink('users.php',      'fa-users',       'Users',        $currentPage) ?>
-      <?php endif; ?>
     </ul>
   </div>
 
@@ -82,10 +81,9 @@ function navLink(string $href, string $icon, string $label, string $current, str
     <div class="sidebar-section-label">Resources</div>
     <ul class="sidebar-nav">
       <?= navLink('integration.php', 'fa-plug',         'Integrations', $currentPage) ?>
-      <?= navLink('settings.php',    'fa-gear',         'Settings',     $currentPage) ?>
     </ul>
   </div>
 
-  
+
 
 </aside>

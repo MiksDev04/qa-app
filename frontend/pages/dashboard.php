@@ -3,7 +3,7 @@
  * Dashboard Page
  * frontend/pages/dashboard.php
  *
- * Main QA overview — stat cards, recent activity table,
+ * Main QA overview — stat cards, charts,
  * quick actions. Content is loaded via AJAX from backend/api/qa/*.php
  */
 
@@ -29,6 +29,7 @@ $pageTitle = 'Dashboard';
   <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../assets/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -61,32 +62,7 @@ $pageTitle = 'Dashboard';
             <i class="fa-solid fa-rotate-right"></i>
             Refresh
           </button>
-          <button class="btn-primary-qa" data-bs-toggle="modal" data-bs-target="#createModal">
-            <i class="fa-solid fa-plus"></i>
-            Create
-          </button>
         </div>
-      </div>
-
-      <!-- Filter tabs (like Clever's View all / Most recent / Popular) -->
-      <div class="mb-4" style="border-bottom:1px solid var(--border);">
-        <nav class="d-flex gap-3" style="padding-bottom:0;">
-          <button class="tab-btn active" data-tab="all"
-                  style="background:none;border:none;font-size:.88rem;font-weight:600;color:var(--primary);
-                         padding:8px 0;border-bottom:2px solid var(--primary);margin-bottom:-1px;cursor:pointer;font-family:var(--font);">
-            View all
-          </button>
-          <button class="tab-btn" data-tab="recent"
-                  style="background:none;border:none;font-size:.88rem;font-weight:500;color:var(--text-secondary);
-                         padding:8px 0;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;font-family:var(--font);">
-            Most recent
-          </button>
-          <button class="tab-btn" data-tab="critical"
-                  style="background:none;border:none;font-size:.88rem;font-weight:500;color:var(--text-secondary);
-                         padding:8px 0;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;font-family:var(--font);">
-            Critical
-          </button>
-        </nav>
       </div>
 
       <!-- ── Stat Cards Row ───────────────────────────────────── -->
@@ -141,6 +117,50 @@ $pageTitle = 'Dashboard';
       <!-- ── Main Grid (like Clever's kanban columns) ──────────── -->
       <div class="row g-3">
 
+      
+        <!-- Surveys summary -->
+        <div class="col-12 col-lg-6">
+          <div class="card" style="overflow:hidden;border:1px solid rgba(63,81,181,.10);box-shadow:0 18px 40px rgba(15,23,42,.06);background:linear-gradient(180deg,#ffffff 0%,#f8faff 100%);">
+            <div class="card-header-custom" style="padding:18px 20px 14px;border-bottom:1px solid rgba(63,81,181,.08);background:linear-gradient(90deg,rgba(63,81,181,.06),rgba(63,81,181,.015));">
+              <div>
+                <h3 class="card-title mb-1" style="display:flex;align-items:center;gap:10px;">
+                  <span style="width:11px;height:11px;background:linear-gradient(135deg,var(--primary),#7c8cff);border-radius:50%;display:inline-block;box-shadow:0 0 0 4px rgba(63,81,181,.10);"></span>
+                  Survey Responses
+                </h3>
+                <div style="font-size:.78rem;color:var(--text-muted);">Recent survey volume by form</div>
+              </div>
+            </div>
+            <div class="card-body-custom" style="min-height:260px;padding:18px 20px 20px;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(248,250,255,.95));" id="survey-chart-wrap">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div style="font-size:.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;">Survey trend</div>
+                <div style="font-size:.74rem;color:var(--primary);font-weight:700;background:rgba(63,81,181,.08);padding:6px 10px;border-radius:999px;">Responses</div>
+              </div>
+              <canvas id="survey-chart" style="max-height:210px;"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI mini panel -->
+        <div class="col-12 col-lg-6">
+          <div class="card h-100" style="overflow:hidden;border:1px solid rgba(34,197,94,.10);box-shadow:0 18px 40px rgba(15,23,42,.06);background:linear-gradient(180deg,#ffffff 0%,#f8fff9 100%);">
+            <div class="card-header-custom" style="padding:18px 20px 14px;border-bottom:1px solid rgba(34,197,94,.08);background:linear-gradient(90deg,rgba(34,197,94,.06),rgba(34,197,94,.015));">
+              <div>
+                <h3 class="card-title mb-1" style="display:flex;align-items:center;gap:10px;">
+                  <span style="width:11px;height:11px;background:linear-gradient(135deg,var(--accent-green),#7ddc9a);border-radius:50%;display:inline-block;box-shadow:0 0 0 4px rgba(34,197,94,.10);"></span>
+                  KPI Targets
+                </h3>
+                <div style="font-size:.78rem;color:var(--text-muted);">Target versus actual performance</div>
+              </div>
+            </div>
+            <div class="card-body-custom" style="min-height:260px;padding:18px 20px 20px;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(248,255,249,.95));" id="kpi-chart-wrap">
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+                <span style="font-size:.74rem;color:#166534;font-weight:700;background:rgba(34,197,94,.10);padding:6px 10px;border-radius:999px;">Target</span>
+                <span style="font-size:.74rem;color:#1d4ed8;font-weight:700;background:rgba(59,130,246,.10);padding:6px 10px;border-radius:999px;">Actual</span>
+              </div>
+              <canvas id="kpi-chart" style="max-height:210px;"></canvas>
+            </div>
+          </div>
+        </div>
         <!-- Recent Audits column -->
         <div class="col-12 col-lg-6">
           <div class="card">
@@ -200,114 +220,6 @@ $pageTitle = 'Dashboard';
           </div>
         </div>
 
-        <!-- Surveys summary -->
-        <div class="col-12 col-lg-8">
-          <div class="card">
-            <div class="card-header-custom">
-              <h3 class="card-title">
-                <span class="me-2" style="width:10px;height:10px;background:var(--primary);border-radius:50%;display:inline-block;"></span>
-                Survey Responses
-              </h3>
-              <div class="d-flex gap-2 align-items-center">
-                <select class="form-control-qa" id="survey-period"
-                        style="padding:5px 10px;font-size:.78rem;width:auto;">
-                  <option value="this_sem">This Semester</option>
-                  <option value="last_sem">Last Semester</option>
-                  <option value="this_year">This Year</option>
-                </select>
-              </div>
-            </div>
-            <div class="card-body-custom" style="min-height:200px; display:flex; align-items:center; justify-content:center;" id="survey-chart-wrap">
-              <div class="text-center text-muted-qa">
-                <i class="fa-solid fa-chart-bar" style="font-size:2rem; opacity:.2;"></i>
-                <p style="font-size:.82rem; margin-top:8px;">Survey chart will render here</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- KPI mini panel -->
-        <div class="col-12 col-lg-4">
-          <div class="card h-100">
-            <div class="card-header-custom">
-              <h3 class="card-title">
-                <span class="me-2" style="width:10px;height:10px;background:var(--accent-green);border-radius:50%;display:inline-block;"></span>
-                KPI Targets
-              </h3>
-            </div>
-            <div class="card-body-custom" id="kpi-list">
-              <!-- KPI items load via AJAX -->
-              <?php
-              $kpiPlaceholders = [
-                ['label' => 'Board Exam Pass Rate',   'color' => 'green'],
-                ['label' => 'Graduation Rate',        'color' => 'blue'],
-                ['label' => 'Faculty Evaluation Avg', 'color' => 'purple'],
-                ['label' => 'Student Satisfaction',   'color' => 'orange'],
-              ];
-              foreach ($kpiPlaceholders as $kpi):
-              ?>
-              <div class="mb-3">
-                <div class="d-flex justify-content-between mb-1">
-                  <span style="font-size:.78rem;font-weight:600;color:var(--text-secondary);">
-                    <?= $kpi['label'] ?>
-                  </span>
-                  <span class="kpi-pct" style="font-size:.78rem;font-weight:700;color:var(--text-primary);">—</span>
-                </div>
-                <div class="progress-bar-wrap">
-                  <div class="progress-bar-fill <?= $kpi['color'] ?>" style="width:0%;" data-kpi="<?= $kpi['label'] ?>"></div>
-                </div>
-              </div>
-              <?php endforeach; ?>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recent activity table -->
-        <div class="col-12">
-          <div class="card">
-            <div class="card-header-custom">
-              <h3 class="card-title">Recent Activity</h3>
-              <div class="d-flex gap-2">
-                <input type="text" class="form-control-qa" id="activity-search"
-                       placeholder="Search activity…"
-                       style="padding:6px 10px;font-size:.8rem;width:180px;">
-              </div>
-            </div>
-            <div class="table-responsive">
-              <table class="table-qa" id="activity-table">
-                <thead>
-                  <tr>
-                    <th>Activity</th>
-                    <th>Module</th>
-                    <th>User</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody id="activity-tbody">
-                  <!-- Skeleton rows -->
-                  <?php for ($i = 0; $i < 5; $i++): ?>
-                  <tr>
-                    <td><span class="placeholder-wave"><span class="placeholder col-8 bg-secondary rounded"></span></span></td>
-                    <td><span class="placeholder-wave"><span class="placeholder col-6 bg-secondary rounded"></span></span></td>
-                    <td><span class="placeholder-wave"><span class="placeholder col-5 bg-secondary rounded"></span></span></td>
-                    <td><span class="placeholder-wave"><span class="placeholder col-5 bg-secondary rounded"></span></span></td>
-                    <td><span class="placeholder-wave"><span class="placeholder col-4 bg-secondary rounded"></span></span></td>
-                    <td></td>
-                  </tr>
-                  <?php endfor; ?>
-                </tbody>
-              </table>
-            </div>
-            <!-- Pagination placeholder -->
-            <div class="d-flex align-items-center justify-content-between p-3"
-                 style="border-top:1px solid var(--border-light);">
-              <span style="font-size:.78rem; color:var(--text-muted);" id="activity-count">Loading…</span>
-              <div class="d-flex gap-1" id="activity-pages"></div>
-            </div>
-          </div>
-        </div>
 
       </div><!-- /main grid -->
 
@@ -403,13 +315,13 @@ $(function () {
     loadAudits();
     loadActions();
     loadKPIs();
-    loadActivity();
+    loadSurveyChart();
   }
 
   /* ── Stats ───────────────────────────────────────────────── */
   function loadStats() {
     $.ajax({
-      url     : '../../backend/api/qa/get_stats.php',
+      url     : '../../backend/api/dashboard_api.php?action=get_stats',
       type    : 'GET',
       dataType: 'json',
       success(data) {
@@ -428,7 +340,7 @@ $(function () {
   /* ── Audits list ─────────────────────────────────────────── */
   function loadAudits() {
     $.ajax({
-      url     : '../../backend/api/qa/get_audits.php?limit=5',
+      url     : '../../backend/api/dashboard_api.php?action=get_audits&limit=5',
       type    : 'GET',
       dataType: 'json',
       success(data) {
@@ -470,7 +382,7 @@ $(function () {
   /* ── Action plans list ───────────────────────────────────── */
   function loadActions() {
     $.ajax({
-      url     : '../../backend/api/qa/get_action_plans.php?limit=5&status=open',
+      url     : '../../backend/api/dashboard_api.php?action=get_action_plans&limit=5&status=open',
       type    : 'GET',
       dataType: 'json',
       success(data) {
@@ -509,91 +421,191 @@ $(function () {
   }
 
   /* ── KPIs ────────────────────────────────────────────────── */
+  let kpiChartInstance = null;
+
   function loadKPIs() {
     $.ajax({
-      url     : '../../backend/api/qa/get_kpis.php',
+      url     : '../../backend/api/dashboard_api.php?action=get_kpis',
       type    : 'GET',
       dataType: 'json',
       success(data) {
         if (!data.success || !data.kpis) return;
-        data.kpis.forEach((k, i) => {
-          const fills = $('#kpi-list .progress-bar-fill');
-          if (fills.eq(i).length) {
-            fills.eq(i).css('width', (k.value ?? 0) + '%');
-            fills.eq(i).closest('.mb-3').find('.kpi-pct').text((k.value ?? 0) + '%');
-          }
+
+        const labels = data.kpis.map(k => k.name || 'KPI');
+        const targetValues = data.kpis.map(k => k.target ?? 0);
+        const actualValues = data.kpis.map(k => k.actual ?? 0);
+        const axisMax = Math.max(100, ...targetValues, ...actualValues) + 10;
+
+        const ctx = document.getElementById('kpi-chart');
+        if (!ctx) return;
+
+        if (kpiChartInstance) kpiChartInstance.destroy();
+
+        kpiChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'Target',
+                data: targetValues,
+                backgroundColor: 'rgba(34, 197, 94, 0.42)',
+                borderColor: 'rgba(34, 197, 94, 1)',
+                borderWidth: 1,
+                borderRadius: 0,
+                barPercentage: 0.92,
+                categoryPercentage: 0.72,
+                maxBarThickness: 40,
+              },
+              {
+                label: 'Actual',
+                data: actualValues,
+                backgroundColor: 'rgba(59, 130, 246, 0.42)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 1,
+                borderRadius: 0,
+                barPercentage: 0.92,
+                categoryPercentage: 0.72,
+                maxBarThickness: 40,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                  font: { size: 12 },
+                  color: 'var(--text-primary)',
+                  usePointStyle: true,
+                  boxWidth: 10,
+                  boxHeight: 10,
+                },
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: axisMax,
+                ticks: {
+                  color: 'var(--text-secondary)',
+                  font: { size: 11 },
+                },
+                grid: {
+                  color: 'rgba(148,163,184,.16)',
+                  drawBorder: false,
+                },
+              },
+              x: {
+                ticks: {
+                  color: 'var(--text-secondary)',
+                  font: { size: 11 },
+                },
+                grid: {
+                  display: false,
+                },
+              },
+            },
+          },
         });
-      }
+      },
     });
   }
 
-  /* ── Activity table ──────────────────────────────────────── */
-  let activityPage = 1;
+  /* ── Survey Chart ────────────────────────────────────────── */
+  let surveyChartInstance = null;
 
-  function loadActivity(page = 1, search = '') {
-    activityPage = page;
+  function loadSurveyChart() {
     $.ajax({
-      url     : `../../backend/api/qa/get_activity.php?page=${page}&search=${encodeURIComponent(search)}&limit=10`,
+      url     : '../../backend/api/survey_responses_api.php?action=get_all_responses',
       type    : 'GET',
       dataType: 'json',
       success(data) {
-        const tbody = $('#activity-tbody').empty();
-        if (!data.success || !data.items?.length) {
-          tbody.html(`<tr><td colspan="6" class="text-center py-4">${emptyState('No activity found')}</td></tr>`);
-          $('#activity-count').text('0 records');
+        if (!data.success || !Array.isArray(data.data) || !data.data.length) {
+          $('#survey-chart-wrap').html(emptyState('No survey responses found'));
           return;
         }
-        data.items.forEach(item => {
-          tbody.append(`
-            <tr>
-              <td><strong>${escHtml(item.activity)}</strong></td>
-              <td>${escHtml(item.module)}</td>
-              <td>${escHtml(item.user)}</td>
-              <td><span class="badge-qa ${badgeClass(item.status)}">${escHtml(item.status)}</span></td>
-              <td style="color:var(--text-muted);font-size:.8rem;">${escHtml(item.date)}</td>
-              <td>
-                <button class="btn-outline-qa view-activity-btn"
-                        data-id="${escHtml(item.id)}"
-                        style="padding:4px 10px;font-size:.75rem;">
-                  View
-                </button>
-              </td>
-            </tr>
-          `);
+
+        const labels = data.data.map(item => item.title || 'Survey');
+        const responseCounts = data.data.map(item => item.responses_count ?? 0);
+
+        const ctx = document.getElementById('survey-chart');
+        if (!ctx) return;
+
+        if (surveyChartInstance) surveyChartInstance.destroy();
+
+        surveyChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: 'Survey Responses',
+                data: responseCounts,
+                borderColor: 'rgba(63, 81, 181, 1)',
+                backgroundColor: 'rgba(63, 81, 181, 0.45)',
+                borderWidth: 2,
+                borderRadius: 0,
+                barPercentage: 0.95,
+                categoryPercentage: 0.76,
+                maxBarThickness: 46,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            layout: {
+              padding: {
+                top: 4,
+                right: 4,
+                bottom: 0,
+                left: 0,
+              },
+            },
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                  font: { size: 12 },
+                  color: 'var(--text-primary)',
+                  usePointStyle: true,
+                  boxWidth: 10,
+                  boxHeight: 10,
+                },
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  color: 'var(--text-secondary)',
+                  font: { size: 11 },
+                },
+                grid: {
+                  color: 'rgba(148,163,184,.16)',
+                  drawBorder: false,
+                },
+              },
+              x: {
+                ticks: {
+                  color: 'var(--text-secondary)',
+                  font: { size: 11 },
+                },
+                grid: {
+                  display: false,
+                },
+              },
+            },
+          },
         });
-        const total = data.total ?? data.items.length;
-        $('#activity-count').text(`${total} record${total !== 1 ? 's' : ''}`);
-        renderPagination(data.page ?? 1, data.total_pages ?? 1);
       },
-      error() {
-        $('#activity-tbody').html(`<tr><td colspan="6">${errorState('Failed to load activity.')}</td></tr>`);
-      }
     });
   }
-
-  function renderPagination(current, total) {
-    const wrap = $('#activity-pages').empty();
-    for (let p = 1; p <= total; p++) {
-      const active = p === current ? 'background:var(--primary);color:#fff;border-color:var(--primary);' : '';
-      wrap.append(`
-        <button class="btn-outline-qa page-btn"
-                data-page="${p}"
-                style="padding:4px 10px;font-size:.75rem;min-width:32px;${active}">${p}</button>
-      `);
-    }
-  }
-
-  // Pagination click
-  $(document).on('click', '.page-btn', function () {
-    loadActivity(+$(this).data('page'), $('#activity-search').val());
-  });
-
-  // Activity search
-  let searchTimer;
-  $('#activity-search').on('input', function () {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => loadActivity(1, $(this).val()), 400);
-  });
 
   /* ── Refresh ─────────────────────────────────────────────── */
   $('#refresh-btn').on('click', function () {
@@ -606,23 +618,6 @@ $(function () {
       btn.disabled = false;
       toast.success('Dashboard refreshed.', 'Updated');
     }, 1200);
-  });
-
-  /* ── Tab filter ──────────────────────────────────────────── */
-  $('.tab-btn').on('click', function () {
-    $('.tab-btn').css({
-      'color'        : 'var(--text-secondary)',
-      'border-bottom': '2px solid transparent',
-      'font-weight'  : '500'
-    });
-    $(this).css({
-      'color'        : 'var(--primary)',
-      'border-bottom': '2px solid var(--primary)',
-      'font-weight'  : '600'
-    });
-    // Reload with filter
-    const tab = $(this).data('tab');
-    loadActivity(1, tab === 'all' ? '' : tab);
   });
 
   /* ── Create form submit ──────────────────────────────────── */
@@ -640,7 +635,7 @@ $(function () {
     btnLoading(btn, 'Creating…');
 
     $.ajax({
-      url     : '../../backend/api/qa/create_item.php',
+      url     : '../../backend/api/dashboard_api.php?action=create_item',
       type    : 'POST',
       data    : $('#create-form').serialize(),
       dataType: 'json',

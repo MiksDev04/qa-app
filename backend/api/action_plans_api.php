@@ -29,7 +29,9 @@ $action = isset($_GET['action']) ? $_GET['action'] : null;
 try {
     switch ($method) {
         case 'GET':
-            if ($action === 'get' && isset($_GET['id'])) {
+            if ($action === 'audits') {
+                listAudits();
+            } else if ($action === 'get' && isset($_GET['id'])) {
                 getActionPlanById((int)$_GET['id']);
             } else if ($action === 'list') {
                 listActionPlans();
@@ -78,12 +80,15 @@ function listActionPlans(): void {
     $search = isset($_GET['search']) ? trim($_GET['search']) : '';
     $status = isset($_GET['status']) && $_GET['status'] !== 'all' ? $_GET['status'] : '';
     
-    $sql = "SELECT * FROM qa_action_plans WHERE 1=1";
+    $sql = "SELECT ap.*, a.title AS audit_title
+            FROM qa_action_plans ap
+            LEFT JOIN qa_audits a ON ap.audit_id = a.audit_id
+            WHERE 1=1";
     $params = [];
     $types = '';
     
     if ($search !== '') {
-        $sql .= " AND (title LIKE ? OR description LIKE ?)";
+        $sql .= " AND (ap.title LIKE ? OR ap.description LIKE ?)";
         $searchParam = "%{$search}%";
         $params[] = $searchParam;
         $params[] = $searchParam;
@@ -91,7 +96,7 @@ function listActionPlans(): void {
     }
     
     if ($status !== '') {
-        $sql .= " AND status = ?";
+        $sql .= " AND ap.status = ?";
         $params[] = $status;
         $types .= 's';
     }
@@ -100,7 +105,11 @@ function listActionPlans(): void {
     
     $stmt = $conn->prepare($sql);
     if ($types && count($params)) {
-        $stmt->bind_param($types, ...$params);
+        $bindParams = [$types];
+        foreach ($params as &$param) {
+            $bindParams[] = &$param;
+        }
+        call_user_func_array([$stmt, 'bind_param'], $bindParams);
     }
     
     $stmt->execute();
@@ -120,7 +129,10 @@ function getActionPlanById(int $id): void {
     }
     
     $conn = getDBConnection();
-    $stmt = $conn->prepare("SELECT * FROM qa_action_plans WHERE plan_id = ?");
+    $stmt = $conn->prepare("SELECT ap.*, a.title AS audit_title
+                            FROM qa_action_plans ap
+                            LEFT JOIN qa_audits a ON ap.audit_id = a.audit_id
+                            WHERE ap.plan_id = ?");
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -135,6 +147,20 @@ function getActionPlanById(int $id): void {
 }
 
 /**
+ * Get audits for the action plan dropdown.
+ */
+function listAudits(): void {
+    $conn = getDBConnection();
+    $stmt = $conn->prepare("SELECT audit_id, title FROM qa_audits ORDER BY title ASC");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $audits = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    jsonResponse(true, 'Audits retrieved successfully', ['data' => $audits]);
+}
+
+/**
  * Create a new standard
  */
 function createActionPlan(array $data): void {
@@ -145,12 +171,12 @@ function createActionPlan(array $data): void {
     
     $conn = getDBConnection();
     
-    $audit_id = $data['audit_id'];
+    $audit_id = (int) $data['audit_id'];
     $title = $data['title'];
     $description = $data['description'] ?? '';
     $root_cause = $data['root_cause'];
-    $target_date = $data['target_date'] ?? '';
-    $status = $data['status'] ?? 'Active';
+    $target_date = !empty($data['target_date']) ? $data['target_date'] : null;
+    $status = $data['status'] ?? 'Open';
     
     $stmt = $conn->prepare("
         INSERT INTO qa_action_plans (audit_id, title, description, root_cause, target_date, status)
@@ -184,19 +210,19 @@ function updateActionPlan(array $data): void {
     
     $conn = getDBConnection();
     
-    $audit_id = $data['audit_id'];
+    $audit_id = (int) $data['audit_id'];
     $title = $data['title'];
     $description = $data['description'] ?? '';
     $root_cause = $data['root_cause'];
-    $target_date = $data['target_date'] ?? '';
-    $status = $data['status'] ?? 'Active';
+    $target_date = !empty($data['target_date']) ? $data['target_date'] : null;
+    $status = $data['status'] ?? 'Open';
     
     $stmt = $conn->prepare("
         UPDATE qa_action_plans 
         SET audit_id = ?, title = ?, description = ?, root_cause = ?, target_date = ?, status = ?
         WHERE plan_id = ?
     ");
-    $stmt->bind_param('isssssi', $title, $body, $description, $version, $target_date, $status, $id);
+    $stmt->bind_param('isssssi', $audit_id, $title, $description, $root_cause, $target_date, $status, $id);
     
     if ($stmt->execute()) {
         $stmt->close();
@@ -235,11 +261,19 @@ function deleteActionPlan(int $id): void {
  */
 function validateActionPlanData(array $data, bool $isUpdate = false): array {
     $errors = [];
+
+    if (!isset($data['audit_id']) || (int)$data['audit_id'] <= 0) {
+        $errors['audit_id'] = 'Audit ID is required';
+    }
     
     if (empty($data['title']) || trim($data['title']) === '') {
         $errors['title'] = 'Title is required';
     } elseif (strlen($data['title']) > 150) {
         $errors['title'] = 'Title must not exceed 150 characters';
+    }
+
+    if (empty($data['root_cause']) || trim((string)$data['root_cause']) === '') {
+        $errors['root_cause'] = 'Root cause is required';
     }
     
     
