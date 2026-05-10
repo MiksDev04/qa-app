@@ -18,13 +18,20 @@ $connection = [
     'message' => null,
 ];
 
-try {
-    $db = getDBConnection();
-    $connection['ok'] = true;
-    $connection['message'] = 'Connected successfully';
-    $connection['server_info'] = $db->server_info;
-} catch (Throwable $e) {
-    $connection['message'] = $e->getMessage();
+$mysqliDiagnostics = mysqliDiagnostics();
+
+if (!isMysqliAvailable()) {
+    $connection['message'] = 'MySQLi is not enabled in this PHP runtime.';
+} else {
+    try {
+        $db = getDBConnection();
+        $connection['ok'] = true;
+        $connection['message'] = 'Connected successfully';
+        $connection['server_info'] = $db->server_info;
+        $connection['host_info'] = $db->host_info;
+    } catch (Throwable $e) {
+        $connection['message'] = $e->getMessage();
+    }
 }
 
 echo json_encode(
@@ -42,6 +49,7 @@ echo json_encode(
             'DB_PORT' => DB_PORT,
             'DB_CHARSET' => DB_CHARSET,
         ],
+        'mysqli' => $mysqliDiagnostics,
         'connection' => $connection,
         'password_revealed' => $shouldRevealPassword,
         'note' => 'Delete backend/debug_db_config.php after debugging.',

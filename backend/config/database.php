@@ -9,11 +9,14 @@ loadEnvFile(__DIR__ . '/../.env');
 
 $defaultDatabaseName = 'qa_system';
 
-define('DB_HOST', envValue('DB_HOST', 'localhost'));
-define('DB_USER', envValue('DB_USER', 'root'));
-define('DB_PASS', envValue('DB_PASS', ''));
-define('DB_NAME', envValue('DB_NAME', $defaultDatabaseName));
-define('DB_PORT', (int) envValue('DB_PORT', '3306'));
+$databaseUrl = envValue('DATABASE_URL', envValue('MYSQL_URL', ''));
+$databaseConfig = $databaseUrl !== '' ? parseDatabaseUrl($databaseUrl) : [];
+
+define('DB_HOST', $databaseConfig['host'] ?? envValue('DB_HOST', envValue('MYSQLHOST', 'localhost')));
+define('DB_USER', $databaseConfig['user'] ?? envValue('DB_USER', envValue('MYSQLUSER', 'root')));
+define('DB_PASS', $databaseConfig['pass'] ?? envValue('DB_PASS', envValue('MYSQLPASSWORD', '')));
+define('DB_NAME', envValue('DB_NAME', $databaseConfig['name'] ?? envValue('MYSQLDATABASE', $defaultDatabaseName)));
+define('DB_PORT', (int)($databaseConfig['port'] ?? envValue('DB_PORT', envValue('MYSQLPORT', '3306'))));
 define('DB_CHARSET', envValue('DB_CHARSET', 'utf8mb4'));
 
 /**
@@ -28,7 +31,7 @@ function loadEnvFile(string $path): void {
     foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
         $line = trim($line);
 
-        if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) {
+        if ($line === '' || strpos($line, '#') === 0 || strpos($line, '=') === false) {
             continue;
         }
 
@@ -66,6 +69,39 @@ function cleanEnvValue(string $value): string {
     return trim(trim($value), "\"'");
 }
 
+function parseDatabaseUrl(string $url): array {
+    $parts = parse_url($url);
+
+    if ($parts === false) {
+        return [];
+    }
+
+    $path = isset($parts['path']) ? ltrim($parts['path'], '/') : '';
+
+    return [
+        'host' => $parts['host'] ?? null,
+        'user' => isset($parts['user']) ? rawurldecode($parts['user']) : null,
+        'pass' => isset($parts['pass']) ? rawurldecode($parts['pass']) : null,
+        'name' => $path !== '' ? $path : null,
+        'port' => $parts['port'] ?? null,
+    ];
+}
+
+function mysqliDiagnostics(): array {
+    return [
+        'extension_loaded_mysqli' => extension_loaded('mysqli'),
+        'class_exists_mysqli' => class_exists('mysqli'),
+        'function_exists_mysqli_report' => function_exists('mysqli_report'),
+        'function_exists_mysqli_connect' => function_exists('mysqli_connect'),
+    ];
+}
+
+function isMysqliAvailable(): bool {
+    return extension_loaded('mysqli')
+        && class_exists('mysqli')
+        && function_exists('mysqli_report');
+}
+
 /**
  * Get a shared MySQLi connection (singleton).
  * Terminates with a JSON error response if connection fails.
@@ -74,12 +110,16 @@ function getDBConnection(): mysqli {
     static $conn = null;
 
     if ($conn === null) {
-        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+        if (!isMysqliAvailable()) {
+            error_log('[DB Connection] mysqli extension is not available: ' . json_encode(mysqliDiagnostics()));
+            jsonResponse(false, 'MySQLi extension is not enabled in this PHP runtime.', [], 500);
+        }
 
         try {
+            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
             $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
             $conn->set_charset(DB_CHARSET);
-        } catch (mysqli_sql_exception $e) {
+        } catch (Throwable $e) {
             error_log('[DB Connection] ' . $e->getMessage());
             jsonResponse(false, 'Database connection failed. Please contact the administrator.', [], 500);
         }
@@ -161,7 +201,7 @@ function dbFetchAll(string $sql, string $types = '', array $params = []): array 
 
         return $rows;
 
-    } catch (mysqli_sql_exception $e) {
+    } catch (Throwable $e) {
         error_log('[dbFetchAll] ' . $e->getMessage() . ' | SQL: ' . $sql);
         return [];
     }
@@ -205,14 +245,15 @@ function dbExecute(string $sql, string $types = '', array $params = []): int|fal
         $stmt->execute();
 
         // Return insert_id for INSERT statements, affected_rows otherwise
-        $result = str_starts_with(ltrim(strtoupper($sql)), 'INSERT')
+        $normalizedSql = ltrim(strtoupper($sql));
+        $result = strpos($normalizedSql, 'INSERT') === 0
             ? (int) $conn->insert_id
             : (int) $stmt->affected_rows;
 
         $stmt->close();
         return $result;
 
-    } catch (mysqli_sql_exception $e) {
+    } catch (Throwable $e) {
         error_log('[dbExecute] ' . $e->getMessage() . ' | SQL: ' . $sql);
         return false;
     }
