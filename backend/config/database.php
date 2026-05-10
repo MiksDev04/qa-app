@@ -5,16 +5,85 @@
  * backend/config/database.php
  */
 
-// Add this at the top of standards.php (API file) temporarily:
-error_log("Standards API called");
-error_log("GET params: " . print_r($_GET, true));
+loadEnvFile(__DIR__ . '/../.env');
 
-define('DB_HOST',    'localhost');
-define('DB_USER',    'root');
-define('DB_PASS',    '');
-define('DB_NAME',    'qa_system');
-define('DB_PORT',    3306);
-define('DB_CHARSET', 'utf8mb4');
+$databaseUrl = envValue('DATABASE_URL', envValue('MYSQL_URL', ''));
+$databaseConfig = $databaseUrl !== '' ? parseDatabaseUrl($databaseUrl) : [];
+
+define('DB_HOST',    $databaseConfig['host']    ?? envValue('DB_HOST', envValue('MYSQLHOST', 'localhost')));
+define('DB_USER',    $databaseConfig['user']    ?? envValue('DB_USER', envValue('MYSQLUSER', 'root')));
+define('DB_PASS',    $databaseConfig['pass']    ?? envValue('DB_PASS', envValue('MYSQLPASSWORD', '')));
+define('DB_NAME',    $databaseConfig['name']    ?? envValue('DB_NAME', envValue('MYSQLDATABASE', 'qa_system')));
+define('DB_PORT',    (int)($databaseConfig['port'] ?? envValue('DB_PORT', envValue('MYSQLPORT', '3306'))));
+define('DB_CHARSET', envValue('DB_CHARSET', 'utf8mb4'));
+
+/**
+ * Load local .env values for XAMPP/development.
+ * Railway injects variables directly, so this is a local fallback only.
+ */
+function loadEnvFile(string $path): void {
+    if (!is_file($path) || !is_readable($path)) {
+        return;
+    }
+
+    foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $line = trim($line);
+
+        if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) {
+            continue;
+        }
+
+        [$key, $value] = explode('=', $line, 2);
+        $key = trim($key);
+        $value = cleanEnvValue($value);
+
+        if ($key !== '' && getenv($key) === false) {
+            putenv($key . '=' . $value);
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
+        }
+    }
+}
+
+function envValue(string $key, ?string $default = null): ?string {
+    $value = getenv($key);
+
+    if ($value === false && isset($_ENV[$key])) {
+        $value = $_ENV[$key];
+    }
+
+    if ($value === false && isset($_SERVER[$key])) {
+        $value = $_SERVER[$key];
+    }
+
+    if ($value === false || $value === null || $value === '') {
+        return $default;
+    }
+
+    return cleanEnvValue((string)$value);
+}
+
+function cleanEnvValue(string $value): string {
+    return trim(trim($value), "\"'");
+}
+
+function parseDatabaseUrl(string $url): array {
+    $parts = parse_url($url);
+
+    if ($parts === false) {
+        return [];
+    }
+
+    $path = isset($parts['path']) ? ltrim($parts['path'], '/') : '';
+
+    return [
+        'host' => $parts['host'] ?? null,
+        'user' => isset($parts['user']) ? rawurldecode($parts['user']) : null,
+        'pass' => isset($parts['pass']) ? rawurldecode($parts['pass']) : null,
+        'name' => $path !== '' ? $path : null,
+        'port' => $parts['port'] ?? null,
+    ];
+}
 
 /**
  * Get a shared MySQLi connection (singleton).
