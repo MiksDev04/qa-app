@@ -7,14 +7,13 @@
 
 loadEnvFile(__DIR__ . '/../.env');
 
-$databaseUrl = envValue('DATABASE_URL', envValue('MYSQL_URL', ''));
-$databaseConfig = $databaseUrl !== '' ? parseDatabaseUrl($databaseUrl) : [];
+$defaultDatabaseName = 'qa_system';
 
-define('DB_HOST',    $databaseConfig['host']    ?? envValue('DB_HOST', envValue('MYSQLHOST', 'localhost')));
-define('DB_USER',    $databaseConfig['user']    ?? envValue('DB_USER', envValue('MYSQLUSER', 'root')));
-define('DB_PASS',    $databaseConfig['pass']    ?? envValue('DB_PASS', envValue('MYSQLPASSWORD', '')));
-define('DB_NAME',    $databaseConfig['name']    ?? envValue('DB_NAME', envValue('MYSQLDATABASE', 'qa_system')));
-define('DB_PORT',    (int)($databaseConfig['port'] ?? envValue('DB_PORT', envValue('MYSQLPORT', '3306'))));
+define('DB_HOST', envValue('DB_HOST', 'localhost'));
+define('DB_USER', envValue('DB_USER', 'root'));
+define('DB_PASS', envValue('DB_PASS', ''));
+define('DB_NAME', envValue('DB_NAME', $defaultDatabaseName));
+define('DB_PORT', (int) envValue('DB_PORT', '3306'));
 define('DB_CHARSET', envValue('DB_CHARSET', 'utf8mb4'));
 
 /**
@@ -65,24 +64,6 @@ function envValue(string $key, ?string $default = null): ?string {
 
 function cleanEnvValue(string $value): string {
     return trim(trim($value), "\"'");
-}
-
-function parseDatabaseUrl(string $url): array {
-    $parts = parse_url($url);
-
-    if ($parts === false) {
-        return [];
-    }
-
-    $path = isset($parts['path']) ? ltrim($parts['path'], '/') : '';
-
-    return [
-        'host' => $parts['host'] ?? null,
-        'user' => isset($parts['user']) ? rawurldecode($parts['user']) : null,
-        'pass' => isset($parts['pass']) ? rawurldecode($parts['pass']) : null,
-        'name' => $path !== '' ? $path : null,
-        'port' => $parts['port'] ?? null,
-    ];
 }
 
 /**
